@@ -549,6 +549,9 @@
     function openOverlay(card) {
       if (!overlay || !backdrop) return;
       overlay.innerHTML = card.innerHTML;
+      /* remove the click-hint — not needed in full view */
+      var hint = overlay.querySelector('.bc-hint');
+      if (hint) hint.parentNode.removeChild(hint);
       var closeBtn = document.createElement('button');
       closeBtn.id = 'overlayClose'; closeBtn.setAttribute('aria-label', 'Close'); closeBtn.textContent = 'Close';
       closeBtn.addEventListener('click', function(e) { e.stopPropagation(); closeOverlay(); });
