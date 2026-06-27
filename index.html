@@ -754,10 +754,12 @@
       requestAnimationFrame(render);
     }
 
-    /* ── Boot ── */
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-    requestAnimationFrame(render);
+    /* ── Boot — desktop only (canvas is display:none on ≤1024px) ── */
+    if (window.innerWidth > 1024) {
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+      requestAnimationFrame(render);
+    }
   })();
 
   /* ── 13. STORIES — dynamic blog cards from inline data ─── */
