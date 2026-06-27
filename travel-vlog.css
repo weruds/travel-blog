@@ -411,50 +411,54 @@ nav.scrolled{border-color:var(--border);box-shadow:0 2px 32px rgba(245,158,11,0.
   font-family:monospace;background:rgba(245,158,11,0.12);
   border-radius:4px;padding:2px 6px;font-size:0.85em;color:var(--accent);
 }
-/* ── Gallery Slideshow ── */
-.gallery-carousel{
+/* ── Gallery 5-up Slideshow ── */
+.gallery-viewport{
   position:relative;
   width:100%;
-  aspect-ratio:16/9;
-  border-radius:var(--radius);
+  overflow:hidden;
+}
+/* a "page" = one row of 5 images side by side */
+.gallery-page{
+  display:flex;
+  gap:10px;
+  align-items:flex-end; /* align bottoms so mixed heights look intentional */
+  position:absolute;
+  inset:0;
+  width:100%;
+}
+/* first page is static; entering/exiting pages animate */
+.gallery-page.active{position:relative;inset:auto}
+.gallery-page.enter{
+  animation:pgSlideIn 0.7s cubic-bezier(0.4,0,0.2,1) forwards;
+}
+.gallery-page.exit{
+  position:absolute;top:0;left:0;width:100%;
+  animation:pgSlideOut 0.7s cubic-bezier(0.4,0,0.2,1) forwards;
+  pointer-events:none;
+}
+@keyframes pgSlideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+@keyframes pgSlideOut{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+
+/* individual photo cell */
+.gallery-cell{
+  flex:1;min-width:0;
+  display:flex;flex-direction:column;align-items:center;
+  background:var(--surface);
+  border-radius:var(--radius-sm);
   overflow:hidden;
   cursor:pointer;
-  background:var(--surface);
 }
-/* the two image layers: current sits on top, next slides in from right */
-.gallery-slide{
-  position:absolute;inset:0;
-  width:100%;height:100%;
+.gallery-cell img{
+  width:100%;
+  height:auto;         /* NEVER crop — show full image */
+  display:block;
+  object-fit:contain;
 }
-.gallery-slide img{
-  width:100%;height:100%;object-fit:cover;display:block;
-}
-/* incoming slide starts off-screen to the right */
-.gallery-slide.enter{
-  transform:translateX(100%);
-  animation:slideIn 0.7s cubic-bezier(0.4,0,0.2,1) forwards;
-}
-/* outgoing slide exits to the left */
-.gallery-slide.exit{
-  animation:slideOut 0.7s cubic-bezier(0.4,0,0.2,1) forwards;
-}
-@keyframes slideIn{
-  from{transform:translateX(100%)}
-  to{transform:translateX(0)}
-}
-@keyframes slideOut{
-  from{transform:translateX(0)}
-  to{transform:translateX(-100%)}
-}
-/* caption bar */
-.gallery-slide-caption{
-  position:absolute;bottom:0;left:0;right:0;
-  padding:20px 24px 18px;
-  background:linear-gradient(to top,rgba(0,0,0,0.65) 0%,transparent 100%);
-  color:#fff;font-size:0.82rem;font-weight:600;
-  letter-spacing:0.07em;text-transform:uppercase;
-  text-shadow:0 1px 4px rgba(0,0,0,0.7);
-  pointer-events:none;
+.gallery-cell-cap{
+  width:100%;padding:6px 8px;
+  font-size:0.68rem;font-weight:600;letter-spacing:0.05em;
+  text-transform:uppercase;color:var(--muted);
+  text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 /* dot indicators */
 .gallery-dots{
@@ -640,12 +644,12 @@ section + section::before{
 
 /* ===== SECURITY ===== */
 body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
-img,svg,.blog-card-img,.gallery-carousel{-webkit-user-drag:none;user-drag:none;pointer-events:none}
+img,svg,.blog-card-img,.gallery-cell{-webkit-user-drag:none;user-drag:none;pointer-events:none}
 a,button,label,input,select,textarea,.dark-toggle,.filter-btn,.read-more,.modal-close,.hamburger,.gallery-dot{pointer-events:auto}
-.blog-card,.gallery-carousel{pointer-events:auto}
+.blog-card,.gallery-cell{pointer-events:auto}
 .img-guard{position:absolute;inset:0;z-index:5;background:transparent;cursor:default;-webkit-user-select:none;user-select:none}
-.blog-card-img,.gallery-carousel{position:relative}
-.blog-card-img::after,.gallery-carousel::after{
+.blog-card-img,.gallery-cell{position:relative}
+.blog-card-img::after,.gallery-cell::after{
   content:"© KYWR Travel Vlog";
   position:absolute;inset:0;z-index:6;
   display:flex;align-items:center;justify-content:center;
