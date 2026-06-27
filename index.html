@@ -679,15 +679,22 @@
     var timer      = null;
     var animating  = false;
 
-    /* ── Known orientations (W×H measured locally) ── */
+    /* ── Portrait filename lookup (measured from actual image dimensions) ── */
     var PORTRAIT_FILES = {
-      'IMG_1042.JPEG':1,'IMG_1061.JPEG':1,
+      'IMG_1042.JPEG':1, 'IMG_1061.JPEG':1,
+      'IMG_1681.JPEG':1, 'IMG_1684.JPEG':1,
       'IMG_20241105_0009.JPEG':1,
-      'IMG_6047.JPEG':1,'IMG_6134.JPEG':1,'IMG_6247.JPEG':1,
-      'IMG_6523.JPEG':1,'IMG_6562.JPEG':1
+      'IMG_5914.JPEG':1,
+      'IMG_6047.JPEG':1, 'IMG_6134.JPEG':1, 'IMG_6247.JPEG':1,
+      'IMG_6523.JPEG':1, 'IMG_6562.JPEG':1,
+      'IMG_6826.JPEG':1, 'IMG_6829.JPEG':1, 'IMG_6843.JPEG':1,
+      'IMG_7213.JPEG':1, 'IMG_7239.JPEG':1,
+      'IMG_7275.JPEG':1,
+      'IMG_7327.JPEG':1, 'IMG_7347.JPEG':1, 'IMG_7373.JPEG':1,
+      'IMG_7505.JPEG':1
     };
 
-    /* ── Build flat item list ── */
+    /* ── Build flat item list with orientation resolved synchronously ── */
     var manifest = window.__GALLERY_DATA__ || { categories: [] };
     (manifest.categories || []).forEach(function(cat) {
       (cat.folders || []).forEach(function(folder) {
@@ -705,19 +712,29 @@
 
     if (!viewport || allItems.length === 0) return;
 
-    /* ── Build pages immediately (no async probe needed) ── */
+    /* ── Build pages: all landscape first, then all portrait ── */
     function buildPages() {
-      /* sort: all landscape first, then all portrait */
-      var sorted = allItems.slice().sort(function(a, b) {
-        if (a.orient === b.orient) return 0;
-        return a.orient === 'landscape' ? -1 : 1;
+      var landscapeQueue = [];
+      var portraitQueue  = [];
+
+      allItems.forEach(function(item) {
+        if (item.orient === 'portrait') {
+          portraitQueue.push(item);
+        } else {
+          landscapeQueue.push(item);
+        }
       });
 
-      /* chunk into groups of SLOTS */
+      /* chunk each bucket into pages of SLOTS — never mix orientations */
       pages = [];
-      for (var i = 0; i < sorted.length; i += SLOTS) {
-        pages.push(sorted.slice(i, i + SLOTS));
+      for (var l = 0; l < landscapeQueue.length; l += SLOTS) {
+        pages.push(landscapeQueue.slice(l, l + SLOTS));
       }
+      for (var p = 0; p < portraitQueue.length; p += SLOTS) {
+        pages.push(portraitQueue.slice(p, p + SLOTS));
+      }
+
+      if (pages.length === 0) return;
 
       renderPage(0, false);
       buildDots();
@@ -727,12 +744,12 @@
       viewport.addEventListener('mouseenter', function() { clearInterval(timer); });
       viewport.addEventListener('mouseleave', function() { timer = setInterval(advance, INTERVAL); });
     }
-    buildPages(); /* call immediately — no async loading needed */
+    buildPages();
 
     /* ── Build one page (row of 5 cells) ── */
     function makePage(pageItems) {
       var row = document.createElement('div');
-      row.className = 'gallery-page';
+      row.className = 'gallery-page' + (pageItems.length < SLOTS ? ' partial' : '');
       pageItems.forEach(function(item) {
         var cell = document.createElement('div');
         cell.className = 'gallery-cell';

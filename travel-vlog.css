@@ -493,6 +493,14 @@ nav.scrolled{border-color:var(--border);box-shadow:0 2px 32px rgba(245,158,11,0.
   align-items:flex-start;
   width:100%;
 }
+/* partial page (fewer than SLOTS items) — centre without stretching */
+.gallery-page.partial{
+  justify-content:center;
+}
+.gallery-page.partial .gallery-cell{
+  flex:0 0 calc(20% - 8px);   /* same fixed width as a full-5 cell */
+  max-width:calc(20% - 8px);
+}
 .gallery-page.enter{
   animation:pgSlideIn 0.7s cubic-bezier(0.4,0,0.2,1) forwards;
 }
