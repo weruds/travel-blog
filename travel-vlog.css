@@ -67,9 +67,13 @@ h3{font-size:clamp(1.05rem,2.5vw,1.4rem)}
 @keyframes loaderExit{0%{opacity:1;pointer-events:auto}100%{opacity:0;visibility:hidden;pointer-events:none}}
 .loader-logo{
   font-size:2.2rem;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;
-  background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  color:#f97316;
+  -webkit-text-fill-color:#f97316;
 }
-.loader-logo span{-webkit-text-fill-color:transparent}
+.loader-logo span{
+  color:var(--text);
+  -webkit-text-fill-color:var(--text);
+}
 .loader-bar{width:200px;height:3px;background:var(--border);border-radius:99px;overflow:hidden}
 .loader-fill{
   height:100%;width:0;
@@ -91,9 +95,13 @@ nav.scrolled{border-color:var(--border);box-shadow:0 2px 32px rgba(245,158,11,0.
 .nav-inner{display:flex;align-items:center;justify-content:space-between;height:64px;width:min(1160px,92%);margin-inline:auto}
 .nav-logo{
   font-size:1.25rem;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;
-  background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  color:#f97316;
+  -webkit-text-fill-color:#f97316;
 }
-.nav-logo span{-webkit-text-fill-color:transparent}
+.nav-logo span{
+  color:var(--text);
+  -webkit-text-fill-color:var(--text);
+}
 .nav-links{display:flex;gap:2rem;list-style:none}
 .nav-links a{
   font-size:0.85rem;font-weight:600;color:var(--muted);
