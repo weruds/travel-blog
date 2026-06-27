@@ -204,34 +204,8 @@
     if (k === 'printscreen' || k === 'print screen') { e.preventDefault(); showWarning('Screenshot Blocked', 'Screenshots are not permitted on this page.'); flashOverlay(); }
   }, true);
 
-  /* ── 4. DEVTOOLS SIZE DETECTION ─────────────────────────────────── */
-  (function() {
-    var threshold = 160;
-    function checkDevTools() {
-      var widthDiff  = window.outerWidth  - window.innerWidth;
-      var heightDiff = window.outerHeight - window.innerHeight;
-      if (widthDiff > threshold || heightDiff > threshold) {
-        showWarning('Unauthorized Access Detected', 'Developer tools are not permitted on this page. Content is protected under copyright.');
-        document.getElementById('pageWrap').style.filter = 'blur(12px)';
-      } else {
-        document.getElementById('pageWrap').style.filter = '';
-      }
-    }
-    setInterval(checkDevTools, 800);
-  })();
-
-  /* ── 5. DEVTOOLS TIMING DETECTION ───────────────────────────────── */
-  (function() {
-    function devTimingCheck() {
-      var t0 = performance.now();
-      /* debugger trips here if DevTools is open and paused-on-debugger */
-      (function() { /* no-op */ })();
-      if (performance.now() - t0 > 100) {
-        showWarning('Unauthorized Access Detected', 'Developer tools are not permitted on this page.');
-      }
-    }
-    setInterval(devTimingCheck, 3000);
-  })();
+  /* ── 4. DEVTOOLS SIZE DETECTION — disabled (false positives on mobile) ── */
+  /* outerWidth/outerHeight gap on mobile browsers triggers this incorrectly */
 
   /* ── 5b. FOCUS / VISIBILITY / SNIP TOOL PROTECTION ─────────────────
      Blurs the page the instant the window loses focus (window.blur,
