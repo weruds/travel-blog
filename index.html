@@ -395,15 +395,24 @@
     }
 
     /* ── Known destination coordinates (lon, lat) ──
-       Philippines is the origin. Add entries here as new countries arrive. */
+       Philippines is the fixed origin.
+       ADD A NEW COUNTRY: just add one line here matching the countryId used
+       in __STORIES_DATA__. The plane will appear automatically.             */
     var ORIGIN = { id: 'philippines', lon: 122, lat: 12 };
     var DEST_COORDS = {
       'vietnam':     { lon: 106, lat: 16 },
-      /* add more as stories expand:
       'japan':       { lon: 138, lat: 36 },
       'thailand':    { lon: 101, lat: 15 },
       'indonesia':   { lon: 118, lat: -5 },
-      */
+      'singapore':   { lon: 104, lat:  1 },
+      'malaysia':    { lon: 110, lat:  4 },
+      'southkorea':  { lon: 128, lat: 37 },
+      'taiwan':      { lon: 121, lat: 24 },
+      'china':       { lon: 104, lat: 35 },
+      'india':       { lon:  79, lat: 21 },
+      'australia':   { lon: 134, lat:-25 },
+      'usa':         { lon:-100, lat: 38 },
+      'uae':         { lon:  54, lat: 24 },
     };
 
     /* ── World land polygons — Natural Earth 110m (public domain) ──
@@ -663,14 +672,15 @@
       ctx.restore();
     }
 
-    /* ── Animation state per route ── */
-    var routes  = buildRoutes();
-    var states  = routes.map(function(_, i) {
-      return { t: 0, phase: 'fly', pause: 0, delay: i * 3500 /* stagger ms */ };
+    /* ── Animation state per route ──
+       Phases: 'fly' (PH→dest) → 'pause_dest' → 'return' (dest→PH) → 'pause_ph' → repeat */
+    var routes   = buildRoutes();
+    var states   = routes.map(function(_, i) {
+      return { t: 0, phase: 'fly', pause: 0, delay: i * 3500 };
     });
-    var lastTs  = null;
-    var FLY_MS  = 9000;  /* ms for one full flight */
-    var PAUSE_MS = 2500; /* ms pause at destination */
+    var lastTs   = null;
+    var FLY_MS   = 9000;   /* ms for one full leg (PH→dest or dest→PH) */
+    var PAUSE_MS = 2000;   /* ms pause at each end                      */
 
     /* ── Main render loop ── */
     function render(ts) {
@@ -686,33 +696,48 @@
       drawMap(W, H, dark);
 
       /* origin dot — Manila/Philippines */
-      var origin = dark ? 'rgba(249,115,22,0.80)' : 'rgba(200,80,0,0.70)';
-      drawDot(ORIGIN.lon, ORIGIN.lat, W, H, origin, 3.5);
+      var originColor = dark ? 'rgba(249,115,22,0.80)' : 'rgba(200,80,0,0.70)';
+      drawDot(ORIGIN.lon, ORIGIN.lat, W, H, originColor, 3.5);
 
       routes.forEach(function(route, i) {
         var st = states[i];
 
-        /* countdown initial delay stagger */
-        if (st.delay > 0) { st.delay -= dt; requestAnimationFrame(render); return; }
+        /* countdown initial stagger delay */
+        if (st.delay > 0) { st.delay -= dt; return; }
 
-        if (st.phase === 'fly') {
+        /* ── advance state machine ── */
+        if (st.phase === 'fly' || st.phase === 'return') {
           st.t += dt / FLY_MS;
-          if (st.t >= 1) { st.t = 1; st.phase = 'pause'; st.pause = PAUSE_MS; }
+          if (st.t >= 1) {
+            st.t = 1;
+            st.phase = (st.phase === 'fly') ? 'pause_dest' : 'pause_ph';
+            st.pause = PAUSE_MS;
+          }
         } else {
+          /* pause_dest or pause_ph */
           st.pause -= dt;
-          if (st.pause <= 0) { st.t = 0; st.phase = 'fly'; }
+          if (st.pause <= 0) {
+            st.t = 0;
+            st.phase = (st.phase === 'pause_dest') ? 'return' : 'fly';
+          }
         }
 
-        /* destination dot */
+        /* destination dot — always visible once route starts */
         var destColor = dark ? 'rgba(251,191,36,0.65)' : 'rgba(180,100,0,0.60)';
         drawDot(route.to.lon, route.to.lat, W, H, destColor, 2.5);
 
-        /* trail + plane */
-        if (st.t > 0) {
-          drawTrail(ORIGIN.lon, ORIGIN.lat, route.to.lon, route.to.lat, st.t, W, H, dark);
-          if (st.phase === 'fly') {
-            drawPlane(ORIGIN.lon, ORIGIN.lat, route.to.lon, route.to.lat, st.t, W, H, dark);
-          }
+        if (st.t <= 0) return;
+
+        /* ── choose leg direction ── */
+        var isReturn = (st.phase === 'return' || st.phase === 'pause_ph');
+        var lon1 = isReturn ? route.to.lon  : ORIGIN.lon;
+        var lat1 = isReturn ? route.to.lat  : ORIGIN.lat;
+        var lon2 = isReturn ? ORIGIN.lon    : route.to.lon;
+        var lat2 = isReturn ? ORIGIN.lat    : route.to.lat;
+
+        drawTrail(lon1, lat1, lon2, lat2, st.t, W, H, dark);
+        if (st.phase === 'fly' || st.phase === 'return') {
+          drawPlane(lon1, lat1, lon2, lat2, st.t, W, H, dark);
         }
       });
 
