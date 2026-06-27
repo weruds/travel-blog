@@ -19,12 +19,7 @@ powershell.exe -ExecutionPolicy Bypass -Command "$f='%~dp0DOCUMENTATION.md'; $d=
 
 echo.
 echo [4/5] Syncing travel-vlog.html to index.html (GitHub Pages)...
-powershell.exe -ExecutionPolicy Bypass -Command ^
-  "$src = [System.IO.File]::ReadAllText('%~dp0travel-vlog.html', [System.Text.Encoding]::UTF8); ^
-   $src = $src -replace '\"path\":\"Stories/', '\"path\":\"bob-artifacts/Stories/'; ^
-   $src = [regex]::Replace($src, \"'Gallery - Compiled/' \+ photo\.file : 'Gallery - Compiled/' \+ folder\.path \+ '/' \+ photo\.file\", \"'bob-artifacts/Gallery - Compiled/' + photo.file : 'bob-artifacts/Gallery - Compiled/' + folder.path + '/' + photo.file\"); ^
-   [System.IO.File]::WriteAllText('%~dp0..\index.html', $src, [System.Text.Encoding]::UTF8); ^
-   Write-Host 'index.html synced.' -ForegroundColor Cyan"
+powershell.exe -ExecutionPolicy Bypass -File "%~dp0sync-to-index.ps1"
 if errorlevel 1 ( echo ERROR: index.html sync failed. & pause & exit /b 1 )
 
 echo.
