@@ -119,7 +119,8 @@
       <p>A curated collection of moments captured across continents — raw, real, and unforgettable.</p>
     </div>
     <!-- Gallery filter bar — hidden until multiple named categories exist -->
-    <div class="gallery-carousel" id="galleryCarousel" role="list" aria-label="Photo gallery"></div>
+    <div class="gallery-carousel" id="galleryCarousel" role="img" aria-label="Photo gallery"></div>
+    <div class="gallery-dots" id="galleryDots" aria-hidden="true"></div>
   </div>
 </section>
 
@@ -567,22 +568,22 @@
     document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeOverlay(); });
   })();
 
-  /* ── 14. GALLERY — 5-slot flip carousel ─────────────── */
+  /* ── 14. GALLERY — full-width sideways slideshow ───── */
   (function() {
-    var carousel  = document.getElementById('galleryCarousel');
-    var modal     = document.getElementById('modalBackdrop');
-    var modalImg  = document.getElementById('modalImg');
-    var modalTitle= document.getElementById('modalTitle');
-    var modalDesc = document.getElementById('modalDesc');
-    var modalClose= document.getElementById('modalClose');
-    var SLOTS     = 5;
-    var INTERVAL  = 5000;  /* ms between flips */
-    var allItems  = [];
-    var cursor    = 0;     /* next item index to fill into a slot */
-    var slots     = [];    /* array of slot objects */
-    var timer     = null;
+    var carousel   = document.getElementById('galleryCarousel');
+    var dotsWrap   = document.getElementById('galleryDots');
+    var modal      = document.getElementById('modalBackdrop');
+    var modalImg   = document.getElementById('modalImg');
+    var modalTitle = document.getElementById('modalTitle');
+    var modalDesc  = document.getElementById('modalDesc');
+    var modalClose = document.getElementById('modalClose');
+    var INTERVAL   = 5000;
+    var allItems   = [];
+    var current    = 0;
+    var timer      = null;
+    var animating  = false;
 
-    /* ── Build flat item list from manifest ── */
+    /* ── Build flat item list ── */
     var manifest = window.__GALLERY_DATA__ || { categories: [] };
     (manifest.categories || []).forEach(function(cat) {
       (cat.folders || []).forEach(function(folder) {
@@ -598,92 +599,86 @@
 
     if (!carousel || allItems.length === 0) return;
 
-    /* ── Build 5 flip slots ── */
-    for (var s = 0; s < SLOTS; s++) {
-      var slot  = document.createElement('div');
-      slot.className = 'gallery-flip-slot';
-      slot.setAttribute('role', 'listitem');
-
-      var inner = document.createElement('div');
-      inner.className = 'gallery-flip-inner';
-
-      var front = document.createElement('div');
-      front.className = 'gallery-flip-front';
-
+    /* ── Build the initial visible slide ── */
+    function makeSlide(item) {
+      var slide = document.createElement('div');
+      slide.className = 'gallery-slide';
       var img = document.createElement('img');
-      img.loading = 'lazy'; img.decoding = 'async';
-
-      var overlay = document.createElement('div');
-      overlay.className = 'gallery-flip-overlay';
-
-      var caption = document.createElement('div');
-      caption.className = 'gallery-flip-caption';
-
+      img.src = item.src; img.alt = item.alt; img.loading = 'lazy'; img.decoding = 'async';
+      var cap = document.createElement('div');
+      cap.className = 'gallery-slide-caption';
+      cap.textContent = item.caption;
       var guard = document.createElement('div');
-      guard.className = 'img-guard'; guard.setAttribute('aria-hidden','true');
-
-      front.appendChild(img);
-      front.appendChild(overlay);
-      front.appendChild(caption);
-      inner.appendChild(front);
-      slot.appendChild(inner);
-      slot.appendChild(guard);
-      carousel.appendChild(slot);
-
-      /* set initial image */
-      var idx = (cursor + s) % allItems.length;
-      img.src = allItems[idx].src;
-      img.alt = allItems[idx].alt;
-      caption.textContent = allItems[idx].caption;
-      slot.setAttribute('aria-label', allItems[idx].alt);
-
-      /* click → open modal */
-      (function(slotEl, imgEl) {
-        slotEl.addEventListener('click', function() { openModal(imgEl.src, imgEl.alt); });
-        slotEl.addEventListener('keydown', function(e) {
-          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openModal(imgEl.src, imgEl.alt); }
-        });
-        slotEl.setAttribute('tabindex', '0');
-      })(slot, img);
-
-      slots.push({ slot: slot, inner: inner, img: img, caption: caption });
+      guard.className = 'img-guard'; guard.setAttribute('aria-hidden', 'true');
+      slide.appendChild(img); slide.appendChild(cap); slide.appendChild(guard);
+      return slide;
     }
-    cursor = (cursor + SLOTS) % allItems.length;
 
-    /* ── Flip one slot at a time, cycling through all slots ── */
-    var flipIndex = 0;
-    function flipNext() {
-      var s = slots[flipIndex];
-      var nextIdx = cursor % allItems.length;
-      var nextItem = allItems[nextIdx];
-      cursor = (cursor + 1) % allItems.length;
-      flipIndex = (flipIndex + 1) % SLOTS;
+    /* first slide */
+    var activeSlide = makeSlide(allItems[0]);
+    carousel.appendChild(activeSlide);
 
-      /* Phase 1: rotate to 90° (hidden) */
-      s.slot.classList.add('flipping');
+    /* click to open modal */
+    carousel.addEventListener('click', function() {
+      openModal(allItems[current].src, allItems[current].alt);
+    });
+
+    /* ── Dot indicators ── */
+    var dots = [];
+    if (dotsWrap) {
+      allItems.forEach(function(_, i) {
+        var dot = document.createElement('button');
+        dot.className = 'gallery-dot' + (i === 0 ? ' active' : '');
+        dot.setAttribute('aria-label', 'Go to photo ' + (i + 1));
+        dot.addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (i !== current && !animating) goTo(i);
+        });
+        dotsWrap.appendChild(dot);
+        dots.push(dot);
+      });
+    }
+
+    function updateDots(idx) {
+      dots.forEach(function(d, i) { d.classList.toggle('active', i === idx); });
+    }
+
+    /* ── Slide transition ── */
+    function goTo(nextIdx) {
+      if (animating) return;
+      animating = true;
+
+      var nextItem  = allItems[nextIdx];
+      var nextSlide = makeSlide(nextItem);
+      nextSlide.classList.add('enter');
+      carousel.appendChild(nextSlide);
+
+      /* exit the current slide */
+      activeSlide.classList.add('exit');
+
+      /* after animation ends, clean up */
+      var oldSlide = activeSlide;
+      activeSlide = nextSlide;
+      current = nextIdx;
+      updateDots(current);
 
       setTimeout(function() {
-        /* swap image at the 90° midpoint */
-        s.img.src     = nextItem.src;
-        s.img.alt     = nextItem.alt;
-        s.caption.textContent = nextItem.caption;
-        s.slot.setAttribute('aria-label', nextItem.alt);
-
-        /* Phase 2: rotate back to 0° */
-        s.slot.classList.remove('flipping');
-      }, 350); /* half of the 0.7s transition */
+        if (oldSlide.parentNode) oldSlide.parentNode.removeChild(oldSlide);
+        nextSlide.classList.remove('enter');
+        animating = false;
+      }, 700);
     }
 
-    /* stagger each slot flip evenly across the 5s interval */
-    var stagger = INTERVAL / SLOTS;
-    for (var i = 0; i < SLOTS; i++) {
-      (function(delay) {
-        setTimeout(function() {
-          flipNext(); /* first flip at staggered start */
-          timer = setInterval(flipNext, INTERVAL);
-        }, delay);
-      })(i * stagger);
+    function advance() {
+      goTo((current + 1) % allItems.length);
     }
+
+    /* ── Auto-advance every 5s ── */
+    timer = setInterval(advance, INTERVAL);
+
+    /* pause on hover */
+    carousel.addEventListener('mouseenter', function() { clearInterval(timer); });
+    carousel.addEventListener('mouseleave', function() { timer = setInterval(advance, INTERVAL); });
 
     /* ── Modal ── */
     function openModal(src, alt) {
