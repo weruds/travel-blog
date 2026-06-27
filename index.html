@@ -105,9 +105,9 @@
       <p>I genuinely believe that the best version of yourself lives somewhere between your comfort zone and a one-way ticket. Every trip teaches me something new — about the world, about people, and honestly, about myself. 🌅</p>
       <blockquote>"Not all those who wander are lost — some of us just refuse to use Google Maps."</blockquote>
       <div class="stats-row">
-        <div class="stat"><div class="stat-num" id="stat-countries">2</div><div class="stat-lbl">Countries</div></div>
-        <div class="stat"><div class="stat-num" id="stat-cities">5</div><div class="stat-lbl">Cities</div></div>
-        <div class="stat"><div class="stat-num" id="stat-posts">5</div><div class="stat-lbl">Stories</div></div>
+        <div class="stat"><div class="stat-num" id="stat-countries">0</div><div class="stat-lbl">Countries</div></div>
+        <div class="stat"><div class="stat-num" id="stat-cities">0</div><div class="stat-lbl">Cities</div></div>
+        <div class="stat"><div class="stat-num" id="stat-posts">0</div><div class="stat-lbl">Stories</div></div>
       </div>
     </div>
   </div>
@@ -386,6 +386,22 @@
     allStories = manifest.stories || [];
     buildStoryFilters();
     renderStories('all');
+    updateStats();
+
+    /* update bio stats from story data */
+    function updateStats() {
+      var countries = {}, cities = {};
+      allStories.forEach(function(s) {
+        if (s.countryId) countries[s.countryId] = true;
+        if (s.destination) cities[s.destination] = true;
+      });
+      var ec = document.getElementById('stat-countries');
+      var eci = document.getElementById('stat-cities');
+      var ep = document.getElementById('stat-posts');
+      if (ec)  ec.textContent  = Object.keys(countries).length;
+      if (eci) eci.textContent = Object.keys(cities).length;
+      if (ep)  ep.textContent  = allStories.length;
+    }
 
     /* build filter pills from unique countries */
     function buildStoryFilters() {
