@@ -380,18 +380,12 @@
     var ctx = canvas.getContext('2d');
 
     /* ── Geo → canvas coordinate (equirectangular) ──
-       Desktop: full world view, centred on Asia-Pacific.
-       Mobile (≤640 px): zoomed in on Southeast Asia so the Philippines
-       and its neighbours fill the canvas rather than being a tiny speck. */
+       Single Asia-Pacific window for all sizes — Philippines and its
+       destinations are centred and fill the panel properly.
+       Covers India → Pacific, Antarctica crop → north of Japan.          */
+    var VIEW = { lonMin: 50, lonMax: 180, latMin: -25, latMax: 55 };
 
-    /* Desktop window */
-    var DESK = { lonMin:-30, lonMax:210, latMin:-55, latMax:75 };
-    /* Mobile window — centred on SEA, covers PH + all current destinations */
-    var MOB  = { lonMin: 55, lonMax:175, latMin:-20, latMax:55 };
-
-    function getWindow() {
-      return window.innerWidth <= 640 ? MOB : DESK;
-    }
+    function getWindow() { return VIEW; }
 
     function project(lon, lat, W, H) {
       var win = getWindow();

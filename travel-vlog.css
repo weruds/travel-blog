@@ -238,7 +238,7 @@ nav.scrolled{border-color:var(--border);box-shadow:0 2px 32px rgba(245,158,11,0.
 #blogMapWrap{
   position:relative;
   width:100%;
-  height:260px;
+  aspect-ratio:16/7;   /* natural-feeling map proportions, ~400px tall on 900px wide */
   margin-bottom:2rem;
   border-radius:var(--radius);
   overflow:hidden;
