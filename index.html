@@ -460,13 +460,8 @@
       container.innerHTML = '';
       carouselOffset = 0;
 
-      if (stories.length <= CARDS_PER_PAGE) {
-        /* ── flat row ── */
-        var row = document.createElement('div');
-        row.className = 'blog-grid';
-        stories.forEach(function(s) { row.appendChild(buildCard(s)); });
-        container.appendChild(row);
-        blogGrid = row;
+      if (false) {
+        /* flat row mode disabled — always use carousel */
       } else {
         /* ── carousel ── */
         var wrap = document.createElement('div');
