@@ -318,9 +318,9 @@ nav.scrolled{border-color:var(--border);box-shadow:0 2px 32px rgba(245,158,11,0.
   border-radius:var(--radius);
   border:1px solid var(--border);
   overflow:hidden;box-shadow:var(--shadow);cursor:pointer;position:relative;
-  /* smaller: fixed width so 5 fit comfortably */
+  /* desktop: 5 cards per view */
   flex:0 0 calc(20% - 12px);
-  min-width:0;
+  min-width:180px;
   transition:opacity 0.3s ease,filter 0.3s ease,border-color 0.3s ease,box-shadow 0.3s ease;
 }
 .blog-card:hover{border-color:rgba(245,158,11,0.6);box-shadow:0 0 0 1px rgba(245,158,11,0.25),0 8px 32px rgba(245,158,11,0.15)}
@@ -724,21 +724,28 @@ a,button,label,input,select,textarea,.dark-toggle,.filter-btn,.read-more,.modal-
 /* ===== RESPONSIVE ===== */
 @media(max-width:960px){
   .contact-grid{grid-template-columns:1fr}
-  .blog-grid{grid-template-columns:repeat(2,1fr)}
   .gallery-carousel{gap:6px}
   .footer-inner{grid-template-columns:1fr 1fr}
+  /* tablet: 3 cards per view */
+  .blog-card{flex:0 0 calc(33.333% - 10px)}
 }
 @media(max-width:640px){
   section{padding:64px 0}
   .nav-links{display:none}
   .hamburger{display:flex}
-  .blog-grid{grid-template-columns:1fr}
   .gallery-carousel{gap:4px}
   .footer-inner{grid-template-columns:1fr}
   .form-row{grid-template-columns:1fr}
   .hero-title{font-size:clamp(2.2rem,9vw,3.8rem)}
+  /* mobile: 2 cards per view */
+  .blog-card{flex:0 0 calc(50% - 8px);min-width:0}
+  .blog-carousel-btn.prev{left:-14px}
+  .blog-carousel-btn.next{right:-14px}
 }
 @media(max-width:420px){
   .gallery-carousel{gap:3px}
   .gallery-flip-caption{display:none}
+  /* small mobile: still 2 cards but tighter gap */
+  .blog-carousel-track{gap:8px}
+  .blog-card{flex:0 0 calc(50% - 5px)}
 }

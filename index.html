@@ -477,21 +477,28 @@
         blogGrid = track;
 
         /* card width = (100% / 5) including gap */
-        var cardW = (100 / CARDS_PER_PAGE);  /* percent — will use px offset */
-        var maxOffset = stories.length - CARDS_PER_PAGE;
+        function visibleCards() {
+          /* match CSS breakpoints */
+          var w = window.innerWidth;
+          if (w <= 640) return 2;
+          if (w <= 960) return 3;
+          return CARDS_PER_PAGE; /* 5 */
+        }
 
         function updateTrack() {
-          /* offset in card-width units */
-          var gap = 14;
-          /* use offsetWidth of one card for pixel-accurate offset */
+          var gap = parseInt(getComputedStyle(track).gap) || 14;
           var firstCard = track.querySelector('.blog-card');
           var cardPx = firstCard ? (firstCard.offsetWidth + gap) : 0;
+          var maxOffset = Math.max(0, stories.length - visibleCards());
+          if (carouselOffset > maxOffset) carouselOffset = maxOffset;
           track.style.transform = 'translateX(-' + (carouselOffset * cardPx) + 'px)';
           prevBtn.style.opacity = carouselOffset <= 0 ? '0.3' : '1';
           nextBtn.style.opacity = carouselOffset >= maxOffset ? '0.3' : '1';
           prevBtn.style.pointerEvents = carouselOffset <= 0 ? 'none' : 'auto';
           nextBtn.style.pointerEvents = carouselOffset >= maxOffset ? 'none' : 'auto';
         }
+
+        window.addEventListener('resize', updateTrack);
 
         var prevBtn = document.createElement('button');
         prevBtn.className = 'blog-carousel-btn prev';
@@ -508,6 +515,7 @@
         nextBtn.innerHTML = '&#8250;';
         nextBtn.addEventListener('click', function(e) {
           e.stopPropagation();
+          var maxOffset = Math.max(0, stories.length - visibleCards());
           if (carouselOffset < maxOffset) { carouselOffset++; updateTrack(); }
         });
 
