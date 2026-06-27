@@ -88,7 +88,7 @@
     <!-- Filter bar — built dynamically from stories-manifest.json -->
     <div class="filter-bar" id="storyFilterBar" role="group" aria-label="Filter destinations"></div>
     <!-- Blog cards — injected dynamically -->
-    <div class="blog-grid" id="blogGrid"></div>
+    <div class="blog-cards-container" id="blogCardsContainer"></div>
   </div>
 </section>
 
@@ -119,8 +119,8 @@
       <p>A curated collection of moments captured across continents — raw, real, and unforgettable.</p>
     </div>
     <!-- Gallery filter bar — hidden until multiple named categories exist -->
-    <div class="gallery-filter-bar" id="galleryFilterBar" role="group" aria-label="Filter gallery by category" style="display:none"></div>
-    <div class="masonry" id="masonryGrid" role="list"></div>
+    <div class="gallery-viewport" id="galleryViewport" aria-label="Photo gallery"></div>
+    <div class="gallery-dots" id="galleryDots" aria-hidden="true"></div>
   </div>
 </section>
 
@@ -394,13 +394,16 @@
 
   /* ── 13. STORIES — dynamic blog cards from inline data ─── */
   (function() {
-    var filterBar   = document.getElementById('storyFilterBar');
-    var blogGrid    = document.getElementById('blogGrid');
-    var backdrop    = document.getElementById('cardBackdrop');
-    var overlay     = document.getElementById('cardOverlay');
-    var allStories  = [];
-    var activeFilter = 'all';
-    var activeCard   = null;
+    var filterBar      = document.getElementById('storyFilterBar');
+    var container      = document.getElementById('blogCardsContainer');
+    var backdrop       = document.getElementById('cardBackdrop');
+    var overlay        = document.getElementById('cardOverlay');
+    var allStories     = [];
+    var activeFilter   = 'all';
+    var activeCard     = null;
+    var blogGrid       = null;   /* set by renderStories — points to .blog-grid or .blog-carousel-track */
+    var carouselOffset = 0;      /* current carousel page offset */
+    var CARDS_PER_PAGE = 5;
 
     var manifest = window.__STORIES_DATA__ || { stories: [] };
     allStories = manifest.stories || [];
@@ -449,13 +452,72 @@
       }
     }
 
-    /* render cards */
+    /* render cards — flat row (≤5) or carousel (6+) */
     function renderStories(filterId) {
-      if (!blogGrid) return;
+      if (!container) return;
       closeOverlay();
       var stories = filterId === 'all' ? allStories : allStories.filter(function(s) { return s.countryId === filterId; });
-      blogGrid.innerHTML = '';
-      stories.forEach(function(story) { blogGrid.appendChild(buildCard(story)); });
+      container.innerHTML = '';
+      carouselOffset = 0;
+
+      if (false) {
+        /* flat row mode disabled — always use carousel */
+      } else {
+        /* ── carousel ── */
+        var wrap = document.createElement('div');
+        wrap.className = 'blog-carousel-wrap';
+
+        var track = document.createElement('div');
+        track.className = 'blog-carousel-track';
+        if (stories.length < CARDS_PER_PAGE) {
+          track.style.justifyContent = 'center';
+        }
+        stories.forEach(function(s) { track.appendChild(buildCard(s)); });
+        wrap.appendChild(track);
+        blogGrid = track;
+
+        /* card width = (100% / 5) including gap */
+        var cardW = (100 / CARDS_PER_PAGE);  /* percent — will use px offset */
+        var maxOffset = stories.length - CARDS_PER_PAGE;
+
+        function updateTrack() {
+          /* offset in card-width units */
+          var gap = 14;
+          /* use offsetWidth of one card for pixel-accurate offset */
+          var firstCard = track.querySelector('.blog-card');
+          var cardPx = firstCard ? (firstCard.offsetWidth + gap) : 0;
+          track.style.transform = 'translateX(-' + (carouselOffset * cardPx) + 'px)';
+          prevBtn.style.opacity = carouselOffset <= 0 ? '0.3' : '1';
+          nextBtn.style.opacity = carouselOffset >= maxOffset ? '0.3' : '1';
+          prevBtn.style.pointerEvents = carouselOffset <= 0 ? 'none' : 'auto';
+          nextBtn.style.pointerEvents = carouselOffset >= maxOffset ? 'none' : 'auto';
+        }
+
+        var prevBtn = document.createElement('button');
+        prevBtn.className = 'blog-carousel-btn prev';
+        prevBtn.setAttribute('aria-label', 'Previous');
+        prevBtn.innerHTML = '&#8249;';
+        prevBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (carouselOffset > 0) { carouselOffset--; updateTrack(); }
+        });
+
+        var nextBtn = document.createElement('button');
+        nextBtn.className = 'blog-carousel-btn next';
+        nextBtn.setAttribute('aria-label', 'Next');
+        nextBtn.innerHTML = '&#8250;';
+        nextBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (carouselOffset < maxOffset) { carouselOffset++; updateTrack(); }
+        });
+
+        wrap.appendChild(prevBtn);
+        wrap.appendChild(nextBtn);
+        container.appendChild(wrap);
+
+        /* init arrow states after layout */
+        setTimeout(updateTrack, 0);
+      }
     }
 
     /* build one blog card DOM node */
@@ -464,43 +526,52 @@
       card.className = 'blog-card';
       card.setAttribute('data-country', story.countryId);
 
-      /* — image area — */
+      /* — image strip: horizontal row of all photos, auto-slides every 5s — */
       var imgWrap = document.createElement('div');
       imgWrap.className = 'blog-card-img';
 
       if (story.images && story.images.length > 0) {
-        /* photo carousel */
-        var carousel = document.createElement('div');
-        carousel.className = 'sv-carousel';
+        /* horizontal strip viewport */
+        var stripViewport = document.createElement('div');
+        stripViewport.className = 'bc-strip-viewport';
 
-        var track = document.createElement('div');
-        track.className = 'sv-carousel-track';
+        var strip = document.createElement('div');
+        strip.className = 'bc-strip';
+
         story.images.forEach(function(img) {
+          var cell = document.createElement('div');
+          cell.className = 'bc-strip-cell';
           var el = document.createElement('img');
           el.src = story.path + '/' + img.file;
           el.alt = img.alt || story.destination;
           el.loading = 'lazy';
-          track.appendChild(el);
+          cell.appendChild(el);
+          strip.appendChild(cell);
         });
-        carousel.appendChild(track);
 
+        stripViewport.appendChild(strip);
+        imgWrap.appendChild(stripViewport);
+
+        /* auto-advance the strip every 4s */
         if (story.images.length > 1) {
-          var prevBtn = document.createElement('button');
-          prevBtn.className = 'sv-carousel-btn prev'; prevBtn.setAttribute('aria-label', 'Previous photo'); prevBtn.innerHTML = '&#8249;';
-          var nextBtn = document.createElement('button');
-          nextBtn.className = 'sv-carousel-btn next'; nextBtn.setAttribute('aria-label', 'Next photo'); nextBtn.innerHTML = '&#8250;';
-          var dotsEl = document.createElement('div'); dotsEl.className = 'sv-carousel-dots';
-          carousel.appendChild(prevBtn); carousel.appendChild(nextBtn); carousel.appendChild(dotsEl);
+          var bcIdx = 0;
+          setInterval(function() {
+            bcIdx = (bcIdx + 1) % story.images.length;
+            strip.style.transform = 'translateX(-' + (bcIdx * 100) + '%)';
+          }, 4000);
         }
-        imgWrap.appendChild(carousel);
-        /* init carousel after appended */
-        setTimeout(function() { initCarouselOn(carousel); }, 0);
       } else {
         /* SVG placeholder */
         var destKey = story.destination.toLowerCase();
         var svgHtml = DEST_SVG[destKey] || ('<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0a0800"/><text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" fill="rgba(245,158,11,0.5)" font-size="14" font-family="sans-serif">' + story.destination + '</text></svg>');
         imgWrap.innerHTML = svgHtml;
       }
+
+      /* hint overlay — visible when NOT hovered */
+      var hint = document.createElement('div');
+      hint.className = 'bc-hint';
+      hint.textContent = 'Click on this card to read storyline';
+      imgWrap.appendChild(hint);
 
       var guard = document.createElement('div'); guard.className = 'img-guard'; guard.setAttribute('aria-hidden', 'true');
       var tagEl = document.createElement('div'); tagEl.className = 'blog-card-tag'; tagEl.textContent = story.countryLabel;
@@ -525,14 +596,10 @@
       }
       card.appendChild(body);
 
-      /* — card footer — */
+      /* — card footer (region only, no Read More) — */
       var footer = document.createElement('div'); footer.className = 'blog-card-footer';
       var regionSpan = document.createElement('span'); regionSpan.textContent = story.region;
       footer.appendChild(regionSpan);
-      if (!story.paragraphs || story.paragraphs.length === 0) {
-        var rm = document.createElement('span'); rm.className = 'read-more'; rm.textContent = 'Read More \u2192';
-        footer.appendChild(rm);
-      }
       card.appendChild(footer);
 
       /* click to open overlay */
@@ -544,22 +611,42 @@
     function openOverlay(card) {
       if (!overlay || !backdrop) return;
       overlay.innerHTML = card.innerHTML;
+      /* remove the click-hint — not needed in full view */
+      var hint = overlay.querySelector('.bc-hint');
+      if (hint) hint.parentNode.removeChild(hint);
       var closeBtn = document.createElement('button');
       closeBtn.id = 'overlayClose'; closeBtn.setAttribute('aria-label', 'Close'); closeBtn.textContent = 'Close';
       closeBtn.addEventListener('click', function(e) { e.stopPropagation(); closeOverlay(); });
       overlay.insertBefore(closeBtn, overlay.firstChild);
-      var c = overlay.querySelector('.sv-carousel');
-      if (c) initCarouselOn(c);
+      /* reinit strip auto-slide — the cloned strip has no interval attached */
+      var strip = overlay.querySelector('.bc-strip');
+      if (strip) {
+        var cells = strip.querySelectorAll('.bc-strip-cell');
+        if (cells.length > 1) {
+          var idx = 0;
+          var stripTimer = setInterval(function() {
+            idx = (idx + 1) % cells.length;
+            strip.style.transform = 'translateX(-' + (idx * 100) + '%)';
+          }, 4000);
+          /* clear timer when overlay closes */
+          overlay.dataset.stripTimer = stripTimer;
+        }
+      }
       overlay.classList.add('show'); backdrop.classList.add('show');
-      blogGrid.classList.add('has-expanded');
+      if (blogGrid) blogGrid.classList.add('has-expanded');
       activeCard = card;
     }
 
     /* overlay close */
     function closeOverlay() {
       if (!activeCard) return;
+      /* clear the strip timer if running */
+      if (overlay.dataset.stripTimer) {
+        clearInterval(parseInt(overlay.dataset.stripTimer));
+        delete overlay.dataset.stripTimer;
+      }
       overlay.classList.remove('show'); backdrop.classList.remove('show');
-      blogGrid.classList.remove('has-expanded');
+      if (blogGrid) blogGrid.classList.remove('has-expanded');
       activeCard = null;
       setTimeout(function() { if (!activeCard && overlay) overlay.innerHTML = ''; }, 300);
     }
@@ -568,157 +655,176 @@
     document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeOverlay(); });
   })();
 
-  /* ── 14. GALLERY — auto-load from inline data ─────── */
+  /* ── 14. GALLERY — 5-up orientation-grouped sideways slideshow ── */
   (function() {
-    var grid       = document.getElementById('masonryGrid');
-    var filterBar  = document.getElementById('galleryFilterBar');
-    var emptyEl    = document.getElementById('galleryEmpty');
+    var viewport   = document.getElementById('galleryViewport');
+    var dotsWrap   = document.getElementById('galleryDots');
     var modal      = document.getElementById('modalBackdrop');
     var modalImg   = document.getElementById('modalImg');
     var modalTitle = document.getElementById('modalTitle');
     var modalDesc  = document.getElementById('modalDesc');
     var modalClose = document.getElementById('modalClose');
-    var allItems = [];
+    var SLOTS      = 5;
+    var INTERVAL   = 5000;
+    var allItems   = [];
+    var pages      = [];   /* array of 5-item arrays */
+    var current    = 0;    /* current page index */
+    var timer      = null;
+    var animating  = false;
 
+    /* ── Known orientations (W×H measured locally) ── */
+    var PORTRAIT_FILES = {
+      'IMG_1042.JPEG':1,'IMG_1061.JPEG':1,
+      'IMG_20241105_0009.JPEG':1,
+      'IMG_6047.JPEG':1,'IMG_6134.JPEG':1,'IMG_6247.JPEG':1,
+      'IMG_6523.JPEG':1,'IMG_6562.JPEG':1
+    };
+
+    /* ── Build flat item list ── */
     var manifest = window.__GALLERY_DATA__ || { categories: [] };
-    buildGalleryItems(manifest); buildGalleryFilters(manifest); renderGallery('all');
-
-    function buildGalleryItems(manifest) {
-      (manifest.categories || []).forEach(function(cat) {
-        (cat.folders || []).forEach(function(folder) {
-          (folder.photos || []).forEach(function(photo) {
-            allItems.push({
-              src:      folder.path === '.' ? 'bob-artifacts/Gallery - Compiled/' + photo.file : 'bob-artifacts/Gallery - Compiled/' + folder.path + '/' + photo.file,
-              caption:  photo.caption || folder.name,
-              alt:      photo.alt     || folder.name,
-              category: cat.id,
-              catLabel: cat.label,
-              folder:   folder.name
-            });
+    (manifest.categories || []).forEach(function(cat) {
+      (cat.folders || []).forEach(function(folder) {
+        (folder.photos || []).forEach(function(photo) {
+          var fname = photo.file.split('/').pop();
+          allItems.push({
+            src:     folder.path === '.' ? 'bob-artifacts/Gallery - Compiled/' + photo.file : 'bob-artifacts/Gallery - Compiled/' + folder.path + '/' + photo.file,
+            caption: photo.caption || folder.name,
+            alt:     photo.alt     || folder.name,
+            orient:  PORTRAIT_FILES[fname] ? 'portrait' : 'landscape'
           });
         });
       });
+    });
+
+    if (!viewport || allItems.length === 0) return;
+
+    /* ── Build pages immediately (no async probe needed) ── */
+    function buildPages() {
+      /* sort: all landscape first, then all portrait */
+      var sorted = allItems.slice().sort(function(a, b) {
+        if (a.orient === b.orient) return 0;
+        return a.orient === 'landscape' ? -1 : 1;
+      });
+
+      /* chunk into groups of SLOTS */
+      pages = [];
+      for (var i = 0; i < sorted.length; i += SLOTS) {
+        pages.push(sorted.slice(i, i + SLOTS));
+      }
+
+      renderPage(0, false);
+      buildDots();
+      timer = setInterval(advance, INTERVAL);
+
+      /* pause on hover */
+      viewport.addEventListener('mouseenter', function() { clearInterval(timer); });
+      viewport.addEventListener('mouseleave', function() { timer = setInterval(advance, INTERVAL); });
+    }
+    buildPages(); /* call immediately — no async loading needed */
+
+    /* ── Build one page (row of 5 cells) ── */
+    function makePage(pageItems) {
+      var row = document.createElement('div');
+      row.className = 'gallery-page';
+      pageItems.forEach(function(item) {
+        var cell = document.createElement('div');
+        cell.className = 'gallery-cell';
+
+        var img = document.createElement('img');
+        img.src = item.src; img.alt = item.alt;
+        img.loading = 'lazy'; img.decoding = 'async';
+
+        var cap = document.createElement('div');
+        cap.className = 'gallery-cell-cap';
+        cap.textContent = item.caption;
+
+        var guard = document.createElement('div');
+        guard.className = 'img-guard'; guard.setAttribute('aria-hidden', 'true');
+
+        cell.appendChild(img); cell.appendChild(cap); cell.appendChild(guard);
+
+        /* click → modal */
+        cell.addEventListener('click', function() { openModal(item.src, item.alt); });
+        row.appendChild(cell);
+      });
+      return row;
     }
 
-    function buildGalleryFilters(manifest) {
-      if (!filterBar) return;
-      var rawCats = manifest.categories || [];
-      // Only show the filter bar when there are 2+ real named categories
-      if (rawCats.length < 2) { filterBar.style.display = 'none'; return; }
-      filterBar.style.display = '';
-      filterBar.innerHTML = '';
-      var cats = [{ id: 'all', label: 'All' }].concat(rawCats.map(function(c) { return { id: c.id, label: c.label }; }));
-      cats.forEach(function(cat) {
-        var btn = document.createElement('button');
-        btn.className = 'filter-btn gallery-filter-btn' + (cat.id === 'all' ? ' active' : '');
-        btn.textContent = cat.label; btn.setAttribute('data-filter', cat.id);
-        btn.addEventListener('click', function() {
-          filterBar.querySelectorAll('.gallery-filter-btn').forEach(function(b) { b.classList.toggle('active', b.getAttribute('data-filter') === cat.id); });
-          renderGallery(cat.id);
+    /* ── Render a page (with or without animation) ── */
+    var activePageEl = null;
+    function renderPage(idx, animate) {
+      var newPage = makePage(pages[idx]);
+      if (!animate || !activePageEl) {
+        viewport.innerHTML = '';
+        viewport.appendChild(newPage);
+        activePageEl = newPage;
+        return;
+      }
+      animating = true;
+      /* position the exiting page absolutely so the entering page
+         flows in the normal document flow (no height collapse) */
+      var exitHeight = activePageEl.offsetHeight;
+      viewport.style.minHeight = exitHeight + 'px';
+      activePageEl.style.cssText = 'position:absolute;top:0;left:0;width:100%;';
+      activePageEl.classList.add('exit');
+
+      newPage.classList.add('enter');
+      viewport.appendChild(newPage);
+
+      var oldPage = activePageEl;
+      activePageEl = newPage;
+      setTimeout(function() {
+        newPage.classList.remove('enter');
+        viewport.style.minHeight = '';
+        if (oldPage.parentNode) oldPage.parentNode.removeChild(oldPage);
+        animating = false;
+      }, 700);
+    }
+
+    /* ── Dots ── */
+    var dots = [];
+    function buildDots() {
+      if (!dotsWrap) return;
+      dotsWrap.innerHTML = '';
+      dots = [];
+      pages.forEach(function(_, i) {
+        var dot = document.createElement('button');
+        dot.className = 'gallery-dot' + (i === 0 ? ' active' : '');
+        dot.setAttribute('aria-label', 'Go to page ' + (i + 1));
+        dot.addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (i !== current && !animating) goTo(i);
         });
-        filterBar.appendChild(btn);
+        dotsWrap.appendChild(dot);
+        dots.push(dot);
       });
     }
-
-    /* ── Colour-sort helpers ── */
-    function rgbToHsl(r, g, b) {
-      r /= 255; g /= 255; b /= 255;
-      var max = Math.max(r, g, b), min = Math.min(r, g, b);
-      var h, s, l = (max + min) / 2;
-      if (max === min) { h = s = 0; }
-      else {
-        var d = max - min;
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-        switch (max) {
-          case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-          case g: h = ((b - r) / d + 2) / 6; break;
-          default: h = ((r - g) / d + 4) / 6;
-        }
-      }
-      return [h * 360, s, l];
+    function updateDots(idx) {
+      dots.forEach(function(d, i) { d.classList.toggle('active', i === idx); });
     }
 
-    function getDominantHue(imgEl, callback) {
-      try {
-        var cv = document.createElement('canvas');
-        cv.width = 32; cv.height = 32;
-        var ctx = cv.getContext('2d');
-        ctx.drawImage(imgEl, 0, 0, 32, 32);
-        var data = ctx.getImageData(0, 0, 32, 32).data;
-        var hueSum = 0, satSum = 0, count = 0;
-        for (var i = 0; i < data.length; i += 16) {
-          var hsl = rgbToHsl(data[i], data[i+1], data[i+2]);
-          if (hsl[1] > 0.08) { hueSum += hsl[0]; satSum += hsl[1]; count++; }
-        }
-        /* low-saturation (grey/white/black) photos → hue 999 so they group at end */
-        callback(count > 4 ? hueSum / count : 999);
-      } catch(e) { callback(999); }
+    function goTo(nextIdx) {
+      if (animating) return;
+      current = nextIdx;
+      updateDots(current);
+      renderPage(current, true);
     }
 
-    function buildCard(item) {
-      var div = document.createElement('div');
-      div.className = 'masonry-item'; div.setAttribute('role', 'listitem'); div.setAttribute('tabindex', '0'); div.setAttribute('aria-label', item.alt);
-      var img = document.createElement('img');
-      img.className = 'gallery-img'; img.src = item.src; img.alt = item.alt; img.loading = 'lazy'; img.decoding = 'async';
-      img.onerror = function() {
-        div.style.background = 'var(--surface)'; img.style.display = 'none';
-        var ph = document.createElement('div');
-        ph.style.cssText = 'width:100%;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;padding:1rem;text-align:center';
-        ph.textContent = item.caption; div.insertBefore(ph, div.querySelector('.masonry-overlay'));
-      };
-      var ovl = document.createElement('div'); ovl.className = 'masonry-overlay';
-      var cap = document.createElement('span'); cap.className = 'masonry-caption'; cap.textContent = item.caption + ' \u00b7 ' + item.catLabel;
-      ovl.appendChild(cap);
-      var gd = document.createElement('div'); gd.className = 'img-guard'; gd.setAttribute('aria-hidden', 'true');
-      div.appendChild(img); div.appendChild(ovl); div.appendChild(gd);
-      function openModal() {
-        if (!modal) return;
-        modalImg.innerHTML = '';
-        var mi = document.createElement('img'); mi.src = item.src; mi.alt = item.alt;
-        mi.style.cssText = 'width:100%;display:block;max-height:65vh;object-fit:contain;background:var(--surface)';
-        modalImg.appendChild(mi);
-        if (modalTitle) modalTitle.textContent = '';
-        if (modalDesc)  modalDesc.textContent  = '';
-        modal.classList.add('open');
-      }
-      div.addEventListener('click', openModal);
-      div.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openModal(); } });
-      return { div: div, img: img };
+    function advance() {
+      goTo((current + 1) % pages.length);
     }
 
-    function renderGallery(filterId) {
-      if (!grid) return;
-      var items = filterId === 'all' ? allItems : allItems.filter(function(it) { return it.category === filterId; });
-      grid.innerHTML = '';
-      if (items.length === 0) return;
-
-      /* Build cards first, then colour-sort once all images decode */
-      var cards = items.map(function(item) {
-        var c = buildCard(item);
-        return { div: c.div, img: c.img, hue: 999 };
-      });
-
-      var loaded = 0;
-      function trySort() {
-        loaded++;
-        if (loaded < cards.length) return;
-        cards.sort(function(a, b) { return a.hue - b.hue; });
-        grid.innerHTML = '';
-        cards.forEach(function(c) { grid.appendChild(c.div); });
-      }
-
-      cards.forEach(function(card) {
-        if (card.img.complete && card.img.naturalWidth > 0) {
-          getDominantHue(card.img, function(h) { card.hue = h; trySort(); });
-        } else {
-          card.img.addEventListener('load', function() {
-            getDominantHue(card.img, function(h) { card.hue = h; trySort(); });
-          });
-          card.img.addEventListener('error', function() { trySort(); });
-          /* show grid immediately with unsorted cards while loading */
-          grid.appendChild(card.div);
-        }
-      });
+    /* ── Modal ── */
+    function openModal(src, alt) {
+      if (!modal) return;
+      modalImg.innerHTML = '';
+      var mi = document.createElement('img');
+      mi.src = src; mi.alt = alt;
+      mi.style.cssText = 'width:100%;display:block;max-height:65vh;object-fit:contain;background:var(--surface)';
+      modalImg.appendChild(mi);
+      if (modalTitle) modalTitle.textContent = '';
+      if (modalDesc)  modalDesc.textContent  = '';
+      modal.classList.add('open');
     }
 
     if (modalClose) modalClose.addEventListener('click', function() { modal && modal.classList.remove('open'); });
