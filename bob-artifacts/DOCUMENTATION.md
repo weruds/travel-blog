@@ -224,7 +224,7 @@ For a permanent URL, use **GitHub Pages** (free, your own domain possible).
 **What you need:** A browser. No account required for a temporary URL.
 
 1. Go to **https://app.netlify.com/drop**
-2. Open File Explorer and navigate to `C:\Users\Wilson Serquina\AppData\Local\Temp\bob-artifacts\`
+2. Open File Explorer and navigate to `C:\kyahweru\bob-artifacts\`
 3. Select the entire **`bob-artifacts`** folder and drag it onto the Netlify Drop page
 4. Netlify gives you a live URL like `https://random-name-12345.netlify.app` instantly
 5. Share that URL
