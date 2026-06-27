@@ -464,43 +464,52 @@
       card.className = 'blog-card';
       card.setAttribute('data-country', story.countryId);
 
-      /* — image area — */
+      /* — image strip: horizontal row of all photos, auto-slides every 5s — */
       var imgWrap = document.createElement('div');
       imgWrap.className = 'blog-card-img';
 
       if (story.images && story.images.length > 0) {
-        /* photo carousel */
-        var carousel = document.createElement('div');
-        carousel.className = 'sv-carousel';
+        /* horizontal strip viewport */
+        var stripViewport = document.createElement('div');
+        stripViewport.className = 'bc-strip-viewport';
 
-        var track = document.createElement('div');
-        track.className = 'sv-carousel-track';
+        var strip = document.createElement('div');
+        strip.className = 'bc-strip';
+
         story.images.forEach(function(img) {
+          var cell = document.createElement('div');
+          cell.className = 'bc-strip-cell';
           var el = document.createElement('img');
           el.src = story.path + '/' + img.file;
           el.alt = img.alt || story.destination;
           el.loading = 'lazy';
-          track.appendChild(el);
+          cell.appendChild(el);
+          strip.appendChild(cell);
         });
-        carousel.appendChild(track);
 
+        stripViewport.appendChild(strip);
+        imgWrap.appendChild(stripViewport);
+
+        /* auto-advance the strip every 4s */
         if (story.images.length > 1) {
-          var prevBtn = document.createElement('button');
-          prevBtn.className = 'sv-carousel-btn prev'; prevBtn.setAttribute('aria-label', 'Previous photo'); prevBtn.innerHTML = '&#8249;';
-          var nextBtn = document.createElement('button');
-          nextBtn.className = 'sv-carousel-btn next'; nextBtn.setAttribute('aria-label', 'Next photo'); nextBtn.innerHTML = '&#8250;';
-          var dotsEl = document.createElement('div'); dotsEl.className = 'sv-carousel-dots';
-          carousel.appendChild(prevBtn); carousel.appendChild(nextBtn); carousel.appendChild(dotsEl);
+          var bcIdx = 0;
+          setInterval(function() {
+            bcIdx = (bcIdx + 1) % story.images.length;
+            strip.style.transform = 'translateX(-' + (bcIdx * 100) + '%)';
+          }, 4000);
         }
-        imgWrap.appendChild(carousel);
-        /* init carousel after appended */
-        setTimeout(function() { initCarouselOn(carousel); }, 0);
       } else {
         /* SVG placeholder */
         var destKey = story.destination.toLowerCase();
         var svgHtml = DEST_SVG[destKey] || ('<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0a0800"/><text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" fill="rgba(245,158,11,0.5)" font-size="14" font-family="sans-serif">' + story.destination + '</text></svg>');
         imgWrap.innerHTML = svgHtml;
       }
+
+      /* hint overlay — visible when NOT hovered */
+      var hint = document.createElement('div');
+      hint.className = 'bc-hint';
+      hint.textContent = 'Click on this card to read storyline';
+      imgWrap.appendChild(hint);
 
       var guard = document.createElement('div'); guard.className = 'img-guard'; guard.setAttribute('aria-hidden', 'true');
       var tagEl = document.createElement('div'); tagEl.className = 'blog-card-tag'; tagEl.textContent = story.countryLabel;
@@ -525,14 +534,10 @@
       }
       card.appendChild(body);
 
-      /* — card footer — */
+      /* — card footer (region only, no Read More) — */
       var footer = document.createElement('div'); footer.className = 'blog-card-footer';
       var regionSpan = document.createElement('span'); regionSpan.textContent = story.region;
       footer.appendChild(regionSpan);
-      if (!story.paragraphs || story.paragraphs.length === 0) {
-        var rm = document.createElement('span'); rm.className = 'read-more'; rm.textContent = 'Read More \u2192';
-        footer.appendChild(rm);
-      }
       card.appendChild(footer);
 
       /* click to open overlay */
@@ -585,17 +590,25 @@
     var timer      = null;
     var animating  = false;
 
-    /* ── Build flat item list with orientation from img naturalWidth/Height ── */
+    /* ── Known orientations (W×H measured locally) ── */
+    var PORTRAIT_FILES = {
+      'IMG_1042.JPEG':1,'IMG_1061.JPEG':1,
+      'IMG_20241105_0009.JPEG':1,
+      'IMG_6047.JPEG':1,'IMG_6134.JPEG':1,'IMG_6247.JPEG':1,
+      'IMG_6523.JPEG':1,'IMG_6562.JPEG':1
+    };
+
+    /* ── Build flat item list ── */
     var manifest = window.__GALLERY_DATA__ || { categories: [] };
     (manifest.categories || []).forEach(function(cat) {
       (cat.folders || []).forEach(function(folder) {
         (folder.photos || []).forEach(function(photo) {
+          var fname = photo.file.split('/').pop();
           allItems.push({
             src:     folder.path === '.' ? 'bob-artifacts/Gallery - Compiled/' + photo.file : 'bob-artifacts/Gallery - Compiled/' + folder.path + '/' + photo.file,
             caption: photo.caption || folder.name,
             alt:     photo.alt     || folder.name,
-            /* orientation determined after image loads; pre-tag from filename patterns */
-            orient:  null  /* 'landscape' | 'portrait' — filled on load */
+            orient:  PORTRAIT_FILES[fname] ? 'portrait' : 'landscape'
           });
         });
       });
@@ -603,22 +616,7 @@
 
     if (!viewport || allItems.length === 0) return;
 
-    /* ── Pre-detect orientations then build pages ── */
-    var loaded = 0;
-    allItems.forEach(function(item, i) {
-      var probe = new Image();
-      probe.onload = probe.onerror = function() {
-        if (probe.naturalWidth && probe.naturalHeight) {
-          item.orient = probe.naturalWidth >= probe.naturalHeight ? 'landscape' : 'portrait';
-        } else {
-          item.orient = 'landscape'; /* fallback */
-        }
-        loaded++;
-        if (loaded === allItems.length) buildPages();
-      };
-      probe.src = item.src;
-    });
-
+    /* ── Build pages immediately (no async probe needed) ── */
     function buildPages() {
       /* sort: all landscape first, then all portrait */
       var sorted = allItems.slice().sort(function(a, b) {
@@ -640,6 +638,7 @@
       viewport.addEventListener('mouseenter', function() { clearInterval(timer); });
       viewport.addEventListener('mouseleave', function() { timer = setInterval(advance, INTERVAL); });
     }
+    buildPages(); /* call immediately — no async loading needed */
 
     /* ── Build one page (row of 5 cells) ── */
     function makePage(pageItems) {

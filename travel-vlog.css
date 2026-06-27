@@ -295,6 +295,36 @@ nav.scrolled{border-color:var(--border);box-shadow:0 2px 32px rgba(245,158,11,0.
 /* ── card image ─ */
 .blog-card-img{width:100%;aspect-ratio:16/10;overflow:hidden;position:relative}
 .blog-card-img svg,.blog-card-img img{width:100%;height:100%;display:block;object-fit:cover}
+
+/* ── blog-card horizontal photo strip ─ */
+.bc-strip-viewport{width:100%;height:100%;overflow:hidden;position:relative}
+.bc-strip{
+  display:flex;
+  flex-direction:row;
+  flex-wrap:nowrap;
+  height:100%;
+  transition:transform 0.7s cubic-bezier(0.4,0,0.2,1);
+}
+.bc-strip-cell{
+  flex:0 0 100%;   /* each cell = exactly 100% of viewport width */
+  height:100%;
+}
+.bc-strip-cell img{width:100%;height:100%;display:block;object-fit:cover}
+
+/* ── click hint overlay — shown at rest, hides on hover ─ */
+.bc-hint{
+  position:absolute;
+  bottom:0;left:0;right:0;
+  padding:10px 14px;
+  background:linear-gradient(to top,rgba(0,0,0,0.72) 0%,transparent 100%);
+  color:#fff;font-size:0.75rem;font-weight:600;
+  letter-spacing:0.04em;text-align:center;
+  pointer-events:none;
+  opacity:1;
+  transition:opacity 0.3s;
+  z-index:6;
+}
+.blog-card:hover .bc-hint{opacity:0}
 .blog-card-tag{
   position:absolute;top:12px;left:12px;
   background:var(--grad);
