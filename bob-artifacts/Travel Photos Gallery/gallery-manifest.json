@@ -1,0 +1,32 @@
+﻿{
+    "version":  1,
+    "description":  "Auto-generated gallery manifest. Run generate-manifest.ps1 after adding photos.",
+    "categories":  [
+                       {
+                           "label":  "International",
+                           "folders":  [
+                                           {
+                                               "path":  "International/Vietnam",
+                                               "name":  "Vietnam",
+                                               "photos":  [
+
+                                                          ]
+                                           }
+                                       ],
+                           "id":  "international"
+                       },
+                       {
+                           "label":  "Local",
+                           "folders":  [
+                                           {
+                                               "path":  "Local/Metro Manila",
+                                               "name":  "Metro Manila",
+                                               "photos":  [
+
+                                                          ]
+                                           }
+                                       ],
+                           "id":  "local"
+                       }
+                   ]
+}

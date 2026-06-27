@@ -1,0 +1,117 @@
+﻿{
+    "version":  1,
+    "description":  "Auto-generated stories manifest. Run generate-stories-manifest.ps1 after adding a destination.",
+    "stories":  [
+                    {
+                        "id":  "philippines-san-vicente-palawan",
+                        "paragraphs":  [
+                                           "This was taken last February 2025, when I visited this place to celebrate my friend’s birthday. After an hour-long van ride from Puerto Princesa, we finally arrived at this hidden gem tucked away in Palawan. The journey itself already felt like part of the adventure — passing through quiet roads and scenic views before reaching a place that I could truly call a secret paradise. It felt raw, peaceful, and full of untouched potential, like a place waiting to be discovered by more travelers.",
+                                           "The yellow-glazed photo was captured during our sunrise walk along Ursula’s Long Beach. The entire shoreline was painted with warm golden tones as the sun slowly rose, filling the morning sky with beautiful shades of orange and yellow. Standing there with the calm waves, fresh breeze, and that breathtaking sunrise in front of us, I already knew it was going to be an amazing day.",
+                                           "One of the most memorable moments was getting the chance to join the local fishermen along the coast as they pulled their fishing nets back to shore early in the morning. Watching their teamwork and experiencing a small part of their daily routine made the trip even more special. After helping out, we were rewarded with a kind gesture — they gave us a discount on a few kilograms of freshly caught fish from their morning haul. We happily told them, “We’re buying this for our lunch,” and ended up enjoying the freshest seafood we could ask for, straight from the ocean to our table.",
+                                           "It wasn’t just a trip to a beautiful place; it was an experience filled with simple moments, local stories, and a deeper appreciation for the people and places that make every adventure memorable."
+                                       ],
+                        "destination":  "San Vicente, Palawan",
+                        "region":  "Local",
+                        "title":  "San Vicente, Palawan",
+                        "images":  [
+                                       {
+                                           "file":  "WhatsApp Image 2026-06-27 at 12.59.09 AM (1).jpeg",
+                                           "alt":  "San Vicente, Palawan - WhatsApp Image 2026-06-27 at 12.59.09 AM (1)"
+                                       },
+                                       {
+                                           "file":  "WhatsApp Image 2026-06-27 at 12.59.09 AM (2).jpeg",
+                                           "alt":  "San Vicente, Palawan - WhatsApp Image 2026-06-27 at 12.59.09 AM (2)"
+                                       },
+                                       {
+                                           "file":  "WhatsApp Image 2026-06-27 at 12.59.09 AM.jpeg",
+                                           "alt":  "San Vicente, Palawan - WhatsApp Image 2026-06-27 at 12.59.09 AM"
+                                       },
+                                       {
+                                           "file":  "WhatsApp Image 2026-06-27 at 12.59.10 AM (1).jpeg",
+                                           "alt":  "San Vicente, Palawan - WhatsApp Image 2026-06-27 at 12.59.10 AM (1)"
+                                       },
+                                       {
+                                           "file":  "WhatsApp Image 2026-06-27 at 12.59.10 AM (2).jpeg",
+                                           "alt":  "San Vicente, Palawan - WhatsApp Image 2026-06-27 at 12.59.10 AM (2)"
+                                       },
+                                       {
+                                           "file":  "WhatsApp Image 2026-06-27 at 12.59.10 AM.jpeg",
+                                           "alt":  "San Vicente, Palawan - WhatsApp Image 2026-06-27 at 12.59.10 AM"
+                                       }
+                                   ],
+                        "date":  "2025",
+                        "countryLabel":  "Philippines",
+                        "path":  "Stories/Philippines/San Vicente, Palawan",
+                        "country":  "Philippines",
+                        "countryId":  "philippines"
+                    },
+                    {
+                        "id":  "vietnam-ha-long-bay",
+                        "paragraphs":  [
+
+                                       ],
+                        "destination":  "Ha Long Bay",
+                        "region":  "International",
+                        "title":  "Ha Long Bay",
+                        "images":  [
+
+                                   ],
+                        "date":  "2025",
+                        "countryLabel":  "Vietnam",
+                        "path":  "Stories/Vietnam/Ha Long Bay",
+                        "country":  "Vietnam",
+                        "countryId":  "vietnam"
+                    },
+                    {
+                        "id":  "vietnam-hanoi",
+                        "paragraphs":  [
+
+                                       ],
+                        "destination":  "Hanoi",
+                        "region":  "International",
+                        "title":  "Hanoi",
+                        "images":  [
+
+                                   ],
+                        "date":  "2025",
+                        "countryLabel":  "Vietnam",
+                        "path":  "Stories/Vietnam/Hanoi",
+                        "country":  "Vietnam",
+                        "countryId":  "vietnam"
+                    },
+                    {
+                        "id":  "vietnam-ninh-binh",
+                        "paragraphs":  [
+
+                                       ],
+                        "destination":  "Ninh Binh",
+                        "region":  "International",
+                        "title":  "Ninh Binh",
+                        "images":  [
+
+                                   ],
+                        "date":  "2025",
+                        "countryLabel":  "Vietnam",
+                        "path":  "Stories/Vietnam/Ninh Binh",
+                        "country":  "Vietnam",
+                        "countryId":  "vietnam"
+                    },
+                    {
+                        "id":  "vietnam-sapa",
+                        "paragraphs":  [
+
+                                       ],
+                        "destination":  "Sapa",
+                        "region":  "International",
+                        "title":  "Sapa",
+                        "images":  [
+
+                                   ],
+                        "date":  "2025",
+                        "countryLabel":  "Vietnam",
+                        "path":  "Stories/Vietnam/Sapa",
+                        "country":  "Vietnam",
+                        "countryId":  "vietnam"
+                    }
+                ]
+}
