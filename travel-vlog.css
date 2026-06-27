@@ -281,16 +281,51 @@ nav.scrolled{border-color:var(--border);box-shadow:0 2px 32px rgba(245,158,11,0.
 .filter-section-label{font-size:0.62rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);padding:0 4px;opacity:0.5;cursor:default}
 
 /* ── Blog grid ─────────────────────────────────── */
-.blog-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:start}
+/* flat row: ≤5 cards side by side */
+.blog-grid{
+  display:flex;
+  flex-direction:row;
+  flex-wrap:nowrap;
+  gap:14px;
+  align-items:flex-start;
+  overflow:hidden;
+}
+/* carousel wrapper when 6+ cards */
+.blog-carousel-wrap{position:relative;overflow:hidden}
+.blog-carousel-track{
+  display:flex;
+  flex-direction:row;
+  flex-wrap:nowrap;
+  gap:14px;
+  transition:transform 0.55s cubic-bezier(0.4,0,0.2,1);
+}
+/* carousel nav arrows */
+.blog-carousel-btn{
+  position:absolute;top:38%;transform:translateY(-50%);
+  width:36px;height:36px;border-radius:50%;
+  background:var(--card-bg);border:1.5px solid var(--border);
+  color:var(--text);font-size:1.2rem;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;z-index:10;
+  transition:background 0.2s,border-color 0.2s;
+  box-shadow:0 2px 8px rgba(0,0,0,0.15);
+}
+.blog-carousel-btn:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+.blog-carousel-btn.prev{left:-18px}
+.blog-carousel-btn.next{right:-18px}
 .blog-card{
   background:var(--card-bg);
   border-radius:var(--radius);
   border:1px solid var(--border);
   overflow:hidden;box-shadow:var(--shadow);cursor:pointer;position:relative;
+  /* smaller: fixed width so 5 fit comfortably */
+  flex:0 0 calc(20% - 12px);
+  min-width:0;
   transition:opacity 0.3s ease,filter 0.3s ease,border-color 0.3s ease,box-shadow 0.3s ease;
 }
 .blog-card:hover{border-color:rgba(245,158,11,0.6);box-shadow:0 0 0 1px rgba(245,158,11,0.25),0 8px 32px rgba(245,158,11,0.15)}
-.blog-grid.has-expanded .blog-card{opacity:0.15;filter:blur(2px);pointer-events:none}
+.blog-grid.has-expanded .blog-card,
+.blog-carousel-track.has-expanded .blog-card{opacity:0.15;filter:blur(2px);pointer-events:none}
 
 /* ── card image ─ */
 .blog-card-img{width:100%;aspect-ratio:16/10;overflow:hidden;position:relative}

@@ -88,7 +88,7 @@
     <!-- Filter bar — built dynamically from stories-manifest.json -->
     <div class="filter-bar" id="storyFilterBar" role="group" aria-label="Filter destinations"></div>
     <!-- Blog cards — injected dynamically -->
-    <div class="blog-grid" id="blogGrid"></div>
+    <div class="blog-cards-container" id="blogCardsContainer"></div>
   </div>
 </section>
 
@@ -394,13 +394,16 @@
 
   /* ── 13. STORIES — dynamic blog cards from inline data ─── */
   (function() {
-    var filterBar   = document.getElementById('storyFilterBar');
-    var blogGrid    = document.getElementById('blogGrid');
-    var backdrop    = document.getElementById('cardBackdrop');
-    var overlay     = document.getElementById('cardOverlay');
-    var allStories  = [];
-    var activeFilter = 'all';
-    var activeCard   = null;
+    var filterBar      = document.getElementById('storyFilterBar');
+    var container      = document.getElementById('blogCardsContainer');
+    var backdrop       = document.getElementById('cardBackdrop');
+    var overlay        = document.getElementById('cardOverlay');
+    var allStories     = [];
+    var activeFilter   = 'all';
+    var activeCard     = null;
+    var blogGrid       = null;   /* set by renderStories — points to .blog-grid or .blog-carousel-track */
+    var carouselOffset = 0;      /* current carousel page offset */
+    var CARDS_PER_PAGE = 5;
 
     var manifest = window.__STORIES_DATA__ || { stories: [] };
     allStories = manifest.stories || [];
@@ -449,13 +452,74 @@
       }
     }
 
-    /* render cards */
+    /* render cards — flat row (≤5) or carousel (6+) */
     function renderStories(filterId) {
-      if (!blogGrid) return;
+      if (!container) return;
       closeOverlay();
       var stories = filterId === 'all' ? allStories : allStories.filter(function(s) { return s.countryId === filterId; });
-      blogGrid.innerHTML = '';
-      stories.forEach(function(story) { blogGrid.appendChild(buildCard(story)); });
+      container.innerHTML = '';
+      carouselOffset = 0;
+
+      if (stories.length <= CARDS_PER_PAGE) {
+        /* ── flat row ── */
+        var row = document.createElement('div');
+        row.className = 'blog-grid';
+        stories.forEach(function(s) { row.appendChild(buildCard(s)); });
+        container.appendChild(row);
+        blogGrid = row;
+      } else {
+        /* ── carousel ── */
+        var wrap = document.createElement('div');
+        wrap.className = 'blog-carousel-wrap';
+
+        var track = document.createElement('div');
+        track.className = 'blog-carousel-track';
+        stories.forEach(function(s) { track.appendChild(buildCard(s)); });
+        wrap.appendChild(track);
+        blogGrid = track;
+
+        /* card width = (100% / 5) including gap */
+        var cardW = (100 / CARDS_PER_PAGE);  /* percent — will use px offset */
+        var maxOffset = stories.length - CARDS_PER_PAGE;
+
+        function updateTrack() {
+          /* offset in card-width units */
+          var gap = 14;
+          /* use offsetWidth of one card for pixel-accurate offset */
+          var firstCard = track.querySelector('.blog-card');
+          var cardPx = firstCard ? (firstCard.offsetWidth + gap) : 0;
+          track.style.transform = 'translateX(-' + (carouselOffset * cardPx) + 'px)';
+          prevBtn.style.opacity = carouselOffset <= 0 ? '0.3' : '1';
+          nextBtn.style.opacity = carouselOffset >= maxOffset ? '0.3' : '1';
+          prevBtn.style.pointerEvents = carouselOffset <= 0 ? 'none' : 'auto';
+          nextBtn.style.pointerEvents = carouselOffset >= maxOffset ? 'none' : 'auto';
+        }
+
+        var prevBtn = document.createElement('button');
+        prevBtn.className = 'blog-carousel-btn prev';
+        prevBtn.setAttribute('aria-label', 'Previous');
+        prevBtn.innerHTML = '&#8249;';
+        prevBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (carouselOffset > 0) { carouselOffset--; updateTrack(); }
+        });
+
+        var nextBtn = document.createElement('button');
+        nextBtn.className = 'blog-carousel-btn next';
+        nextBtn.setAttribute('aria-label', 'Next');
+        nextBtn.innerHTML = '&#8250;';
+        nextBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (carouselOffset < maxOffset) { carouselOffset++; updateTrack(); }
+        });
+
+        wrap.appendChild(prevBtn);
+        wrap.appendChild(nextBtn);
+        container.appendChild(wrap);
+
+        /* init arrow states after layout */
+        setTimeout(updateTrack, 0);
+      }
     }
 
     /* build one blog card DOM node */
@@ -571,7 +635,7 @@
         }
       }
       overlay.classList.add('show'); backdrop.classList.add('show');
-      blogGrid.classList.add('has-expanded');
+      if (blogGrid) blogGrid.classList.add('has-expanded');
       activeCard = card;
     }
 
@@ -584,7 +648,7 @@
         delete overlay.dataset.stripTimer;
       }
       overlay.classList.remove('show'); backdrop.classList.remove('show');
-      blogGrid.classList.remove('has-expanded');
+      if (blogGrid) blogGrid.classList.remove('has-expanded');
       activeCard = null;
       setTimeout(function() { if (!activeCard && overlay) overlay.innerHTML = ''; }, 300);
     }
