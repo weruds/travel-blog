@@ -411,13 +411,49 @@ nav.scrolled{border-color:var(--border);box-shadow:0 2px 32px rgba(245,158,11,0.
   font-family:monospace;background:rgba(245,158,11,0.12);
   border-radius:4px;padding:2px 6px;font-size:0.85em;color:var(--accent);
 }
-.masonry{columns:3;gap:16px}
-.masonry-item{break-inside:avoid;margin-bottom:16px;position:relative;overflow:hidden;border-radius:var(--radius-sm);cursor:pointer}
-.masonry-item svg,.masonry-item .gallery-img{width:100%;display:block;transition:transform 0.5s ease}
-.masonry-item:hover svg,.masonry-item:hover .gallery-img{transform:scale(1.05)}
-.masonry-overlay{position:absolute;inset:0;background:rgba(0,0,0,0);display:flex;align-items:flex-end;padding:16px;transition:background 0.4s}
-.masonry-item:hover .masonry-overlay{background:rgba(0,0,0,0.18)}
-.masonry-caption{display:none}
+/* ── Gallery Flip Carousel ── */
+.gallery-carousel{display:flex;gap:12px;justify-content:center;align-items:stretch;width:100%}
+.gallery-flip-slot{
+  flex:1;min-width:0;
+  perspective:900px;
+  border-radius:var(--radius-sm);
+  overflow:hidden;
+  aspect-ratio:4/3;
+  cursor:pointer;
+}
+.gallery-flip-inner{
+  width:100%;height:100%;
+  position:relative;
+  transform-style:preserve-3d;
+  transition:transform 0.7s cubic-bezier(0.4,0,0.2,1);
+}
+.gallery-flip-slot.flipping .gallery-flip-inner{
+  transform:rotateY(90deg);
+}
+.gallery-flip-front{
+  position:absolute;inset:0;
+  backface-visibility:hidden;
+  border-radius:var(--radius-sm);
+  overflow:hidden;
+}
+.gallery-flip-front img{
+  width:100%;height:100%;object-fit:cover;display:block;
+  transition:transform 0.4s ease;
+}
+.gallery-flip-slot:hover .gallery-flip-front img{transform:scale(1.05)}
+.gallery-flip-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(0,0,0,0.45) 0%,transparent 55%);
+  opacity:0;transition:opacity 0.3s;
+}
+.gallery-flip-slot:hover .gallery-flip-overlay{opacity:1}
+.gallery-flip-caption{
+  position:absolute;bottom:10px;left:12px;right:12px;
+  color:#fff;font-size:0.72rem;font-weight:600;letter-spacing:0.06em;
+  text-transform:uppercase;opacity:0;transition:opacity 0.3s;
+  text-shadow:0 1px 4px rgba(0,0,0,0.7);
+}
+.gallery-flip-slot:hover .gallery-flip-caption{opacity:1}
 
 /* ===== MODAL ===== */
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;visibility:hidden;transition:opacity 0.3s,visibility 0.3s}
@@ -589,18 +625,14 @@ section + section::before{
 .footer-brand .nav-logo{transition:filter 0.3s ease}
 .footer-brand .nav-logo:hover{filter:drop-shadow(0 0 10px rgba(245,158,11,0.65))}
 
-/* — Masonry item lift — */
-.masonry-item{transition:transform 0.35s cubic-bezier(0.34,1.4,0.64,1),box-shadow 0.35s ease}
-.masonry-item:hover{transform:translateY(-4px) scale(1.01);box-shadow:0 8px 28px rgba(245,158,11,0.18)}
-
 /* ===== SECURITY ===== */
 body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
-img,svg,.blog-card-img,.masonry-item{-webkit-user-drag:none;user-drag:none;pointer-events:none}
+img,svg,.blog-card-img,.gallery-flip-slot{-webkit-user-drag:none;user-drag:none;pointer-events:none}
 a,button,label,input,select,textarea,.dark-toggle,.filter-btn,.read-more,.modal-close,.hamburger{pointer-events:auto}
-.blog-card,.masonry-item{pointer-events:auto}
+.blog-card,.gallery-flip-slot{pointer-events:auto}
 .img-guard{position:absolute;inset:0;z-index:5;background:transparent;cursor:default;-webkit-user-select:none;user-select:none}
-.blog-card-img,.masonry-item{position:relative}
-.blog-card-img::after,.masonry-item::after{
+.blog-card-img,.gallery-flip-slot{position:relative}
+.blog-card-img::after,.gallery-flip-slot::after{
   content:"© KYWR Travel Vlog";
   position:absolute;inset:0;z-index:6;
   display:flex;align-items:center;justify-content:center;
@@ -623,7 +655,7 @@ a,button,label,input,select,textarea,.dark-toggle,.filter-btn,.read-more,.modal-
 @media(max-width:960px){
   .contact-grid{grid-template-columns:1fr}
   .blog-grid{grid-template-columns:repeat(2,1fr)}
-  .masonry{columns:2}
+  .gallery-carousel{gap:6px}
   .footer-inner{grid-template-columns:1fr 1fr}
 }
 @media(max-width:640px){
@@ -631,11 +663,12 @@ a,button,label,input,select,textarea,.dark-toggle,.filter-btn,.read-more,.modal-
   .nav-links{display:none}
   .hamburger{display:flex}
   .blog-grid{grid-template-columns:1fr}
-  .masonry{columns:2}
+  .gallery-carousel{gap:4px}
   .footer-inner{grid-template-columns:1fr}
   .form-row{grid-template-columns:1fr}
   .hero-title{font-size:clamp(2.2rem,9vw,3.8rem)}
 }
 @media(max-width:420px){
-  .masonry{columns:1}
+  .gallery-carousel{gap:3px}
+  .gallery-flip-caption{display:none}
 }

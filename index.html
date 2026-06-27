@@ -119,8 +119,7 @@
       <p>A curated collection of moments captured across continents — raw, real, and unforgettable.</p>
     </div>
     <!-- Gallery filter bar — hidden until multiple named categories exist -->
-    <div class="gallery-filter-bar" id="galleryFilterBar" role="group" aria-label="Filter gallery by category" style="display:none"></div>
-    <div class="masonry" id="masonryGrid" role="list"></div>
+    <div class="gallery-carousel" id="galleryCarousel" role="list" aria-label="Photo gallery"></div>
   </div>
 </section>
 
@@ -568,157 +567,135 @@
     document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeOverlay(); });
   })();
 
-  /* ── 14. GALLERY — auto-load from inline data ─────── */
+  /* ── 14. GALLERY — 5-slot flip carousel ─────────────── */
   (function() {
-    var grid       = document.getElementById('masonryGrid');
-    var filterBar  = document.getElementById('galleryFilterBar');
-    var emptyEl    = document.getElementById('galleryEmpty');
-    var modal      = document.getElementById('modalBackdrop');
-    var modalImg   = document.getElementById('modalImg');
-    var modalTitle = document.getElementById('modalTitle');
-    var modalDesc  = document.getElementById('modalDesc');
-    var modalClose = document.getElementById('modalClose');
-    var allItems = [];
+    var carousel  = document.getElementById('galleryCarousel');
+    var modal     = document.getElementById('modalBackdrop');
+    var modalImg  = document.getElementById('modalImg');
+    var modalTitle= document.getElementById('modalTitle');
+    var modalDesc = document.getElementById('modalDesc');
+    var modalClose= document.getElementById('modalClose');
+    var SLOTS     = 5;
+    var INTERVAL  = 5000;  /* ms between flips */
+    var allItems  = [];
+    var cursor    = 0;     /* next item index to fill into a slot */
+    var slots     = [];    /* array of slot objects */
+    var timer     = null;
 
+    /* ── Build flat item list from manifest ── */
     var manifest = window.__GALLERY_DATA__ || { categories: [] };
-    buildGalleryItems(manifest); buildGalleryFilters(manifest); renderGallery('all');
-
-    function buildGalleryItems(manifest) {
-      (manifest.categories || []).forEach(function(cat) {
-        (cat.folders || []).forEach(function(folder) {
-          (folder.photos || []).forEach(function(photo) {
-            allItems.push({
-              src:      folder.path === '.' ? 'bob-artifacts/Gallery - Compiled/' + photo.file : 'bob-artifacts/Gallery - Compiled/' + folder.path + '/' + photo.file,
-              caption:  photo.caption || folder.name,
-              alt:      photo.alt     || folder.name,
-              category: cat.id,
-              catLabel: cat.label,
-              folder:   folder.name
-            });
+    (manifest.categories || []).forEach(function(cat) {
+      (cat.folders || []).forEach(function(folder) {
+        (folder.photos || []).forEach(function(photo) {
+          allItems.push({
+            src:     folder.path === '.' ? 'bob-artifacts/Gallery - Compiled/' + photo.file : 'bob-artifacts/Gallery - Compiled/' + folder.path + '/' + photo.file,
+            caption: photo.caption || folder.name,
+            alt:     photo.alt     || folder.name
           });
         });
       });
-    }
+    });
 
-    function buildGalleryFilters(manifest) {
-      if (!filterBar) return;
-      var rawCats = manifest.categories || [];
-      // Only show the filter bar when there are 2+ real named categories
-      if (rawCats.length < 2) { filterBar.style.display = 'none'; return; }
-      filterBar.style.display = '';
-      filterBar.innerHTML = '';
-      var cats = [{ id: 'all', label: 'All' }].concat(rawCats.map(function(c) { return { id: c.id, label: c.label }; }));
-      cats.forEach(function(cat) {
-        var btn = document.createElement('button');
-        btn.className = 'filter-btn gallery-filter-btn' + (cat.id === 'all' ? ' active' : '');
-        btn.textContent = cat.label; btn.setAttribute('data-filter', cat.id);
-        btn.addEventListener('click', function() {
-          filterBar.querySelectorAll('.gallery-filter-btn').forEach(function(b) { b.classList.toggle('active', b.getAttribute('data-filter') === cat.id); });
-          renderGallery(cat.id);
-        });
-        filterBar.appendChild(btn);
-      });
-    }
+    if (!carousel || allItems.length === 0) return;
 
-    /* ── Colour-sort helpers ── */
-    function rgbToHsl(r, g, b) {
-      r /= 255; g /= 255; b /= 255;
-      var max = Math.max(r, g, b), min = Math.min(r, g, b);
-      var h, s, l = (max + min) / 2;
-      if (max === min) { h = s = 0; }
-      else {
-        var d = max - min;
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-        switch (max) {
-          case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-          case g: h = ((b - r) / d + 2) / 6; break;
-          default: h = ((r - g) / d + 4) / 6;
-        }
-      }
-      return [h * 360, s, l];
-    }
+    /* ── Build 5 flip slots ── */
+    for (var s = 0; s < SLOTS; s++) {
+      var slot  = document.createElement('div');
+      slot.className = 'gallery-flip-slot';
+      slot.setAttribute('role', 'listitem');
 
-    function getDominantHue(imgEl, callback) {
-      try {
-        var cv = document.createElement('canvas');
-        cv.width = 32; cv.height = 32;
-        var ctx = cv.getContext('2d');
-        ctx.drawImage(imgEl, 0, 0, 32, 32);
-        var data = ctx.getImageData(0, 0, 32, 32).data;
-        var hueSum = 0, satSum = 0, count = 0;
-        for (var i = 0; i < data.length; i += 16) {
-          var hsl = rgbToHsl(data[i], data[i+1], data[i+2]);
-          if (hsl[1] > 0.08) { hueSum += hsl[0]; satSum += hsl[1]; count++; }
-        }
-        /* low-saturation (grey/white/black) photos → hue 999 so they group at end */
-        callback(count > 4 ? hueSum / count : 999);
-      } catch(e) { callback(999); }
-    }
+      var inner = document.createElement('div');
+      inner.className = 'gallery-flip-inner';
 
-    function buildCard(item) {
-      var div = document.createElement('div');
-      div.className = 'masonry-item'; div.setAttribute('role', 'listitem'); div.setAttribute('tabindex', '0'); div.setAttribute('aria-label', item.alt);
+      var front = document.createElement('div');
+      front.className = 'gallery-flip-front';
+
       var img = document.createElement('img');
-      img.className = 'gallery-img'; img.src = item.src; img.alt = item.alt; img.loading = 'lazy'; img.decoding = 'async';
-      img.onerror = function() {
-        div.style.background = 'var(--surface)'; img.style.display = 'none';
-        var ph = document.createElement('div');
-        ph.style.cssText = 'width:100%;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;padding:1rem;text-align:center';
-        ph.textContent = item.caption; div.insertBefore(ph, div.querySelector('.masonry-overlay'));
-      };
-      var ovl = document.createElement('div'); ovl.className = 'masonry-overlay';
-      var cap = document.createElement('span'); cap.className = 'masonry-caption'; cap.textContent = item.caption + ' \u00b7 ' + item.catLabel;
-      ovl.appendChild(cap);
-      var gd = document.createElement('div'); gd.className = 'img-guard'; gd.setAttribute('aria-hidden', 'true');
-      div.appendChild(img); div.appendChild(ovl); div.appendChild(gd);
-      function openModal() {
-        if (!modal) return;
-        modalImg.innerHTML = '';
-        var mi = document.createElement('img'); mi.src = item.src; mi.alt = item.alt;
-        mi.style.cssText = 'width:100%;display:block;max-height:65vh;object-fit:contain;background:var(--surface)';
-        modalImg.appendChild(mi);
-        if (modalTitle) modalTitle.textContent = '';
-        if (modalDesc)  modalDesc.textContent  = '';
-        modal.classList.add('open');
-      }
-      div.addEventListener('click', openModal);
-      div.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openModal(); } });
-      return { div: div, img: img };
+      img.loading = 'lazy'; img.decoding = 'async';
+
+      var overlay = document.createElement('div');
+      overlay.className = 'gallery-flip-overlay';
+
+      var caption = document.createElement('div');
+      caption.className = 'gallery-flip-caption';
+
+      var guard = document.createElement('div');
+      guard.className = 'img-guard'; guard.setAttribute('aria-hidden','true');
+
+      front.appendChild(img);
+      front.appendChild(overlay);
+      front.appendChild(caption);
+      inner.appendChild(front);
+      slot.appendChild(inner);
+      slot.appendChild(guard);
+      carousel.appendChild(slot);
+
+      /* set initial image */
+      var idx = (cursor + s) % allItems.length;
+      img.src = allItems[idx].src;
+      img.alt = allItems[idx].alt;
+      caption.textContent = allItems[idx].caption;
+      slot.setAttribute('aria-label', allItems[idx].alt);
+
+      /* click → open modal */
+      (function(slotEl, imgEl) {
+        slotEl.addEventListener('click', function() { openModal(imgEl.src, imgEl.alt); });
+        slotEl.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openModal(imgEl.src, imgEl.alt); }
+        });
+        slotEl.setAttribute('tabindex', '0');
+      })(slot, img);
+
+      slots.push({ slot: slot, inner: inner, img: img, caption: caption });
+    }
+    cursor = (cursor + SLOTS) % allItems.length;
+
+    /* ── Flip one slot at a time, cycling through all slots ── */
+    var flipIndex = 0;
+    function flipNext() {
+      var s = slots[flipIndex];
+      var nextIdx = cursor % allItems.length;
+      var nextItem = allItems[nextIdx];
+      cursor = (cursor + 1) % allItems.length;
+      flipIndex = (flipIndex + 1) % SLOTS;
+
+      /* Phase 1: rotate to 90° (hidden) */
+      s.slot.classList.add('flipping');
+
+      setTimeout(function() {
+        /* swap image at the 90° midpoint */
+        s.img.src     = nextItem.src;
+        s.img.alt     = nextItem.alt;
+        s.caption.textContent = nextItem.caption;
+        s.slot.setAttribute('aria-label', nextItem.alt);
+
+        /* Phase 2: rotate back to 0° */
+        s.slot.classList.remove('flipping');
+      }, 350); /* half of the 0.7s transition */
     }
 
-    function renderGallery(filterId) {
-      if (!grid) return;
-      var items = filterId === 'all' ? allItems : allItems.filter(function(it) { return it.category === filterId; });
-      grid.innerHTML = '';
-      if (items.length === 0) return;
+    /* stagger each slot flip evenly across the 5s interval */
+    var stagger = INTERVAL / SLOTS;
+    for (var i = 0; i < SLOTS; i++) {
+      (function(delay) {
+        setTimeout(function() {
+          flipNext(); /* first flip at staggered start */
+          timer = setInterval(flipNext, INTERVAL);
+        }, delay);
+      })(i * stagger);
+    }
 
-      /* Build cards first, then colour-sort once all images decode */
-      var cards = items.map(function(item) {
-        var c = buildCard(item);
-        return { div: c.div, img: c.img, hue: 999 };
-      });
-
-      var loaded = 0;
-      function trySort() {
-        loaded++;
-        if (loaded < cards.length) return;
-        cards.sort(function(a, b) { return a.hue - b.hue; });
-        grid.innerHTML = '';
-        cards.forEach(function(c) { grid.appendChild(c.div); });
-      }
-
-      cards.forEach(function(card) {
-        if (card.img.complete && card.img.naturalWidth > 0) {
-          getDominantHue(card.img, function(h) { card.hue = h; trySort(); });
-        } else {
-          card.img.addEventListener('load', function() {
-            getDominantHue(card.img, function(h) { card.hue = h; trySort(); });
-          });
-          card.img.addEventListener('error', function() { trySort(); });
-          /* show grid immediately with unsorted cards while loading */
-          grid.appendChild(card.div);
-        }
-      });
+    /* ── Modal ── */
+    function openModal(src, alt) {
+      if (!modal) return;
+      modalImg.innerHTML = '';
+      var mi = document.createElement('img');
+      mi.src = src; mi.alt = alt;
+      mi.style.cssText = 'width:100%;display:block;max-height:65vh;object-fit:contain;background:var(--surface)';
+      modalImg.appendChild(mi);
+      if (modalTitle) modalTitle.textContent = '';
+      if (modalDesc)  modalDesc.textContent  = '';
+      modal.classList.add('open');
     }
 
     if (modalClose) modalClose.addEventListener('click', function() { modal && modal.classList.remove('open'); });
