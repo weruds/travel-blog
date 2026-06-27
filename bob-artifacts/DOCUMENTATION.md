@@ -1,6 +1,6 @@
 ﻿# KYAHWERU Travel Vlog - Project Documentation
 
-> **Last updated:** 2026-06-27
+> **Last updated:** 2026-06-28
 > Maintain this file. Every future change must add an entry under the Changelog section.
 
 ---
