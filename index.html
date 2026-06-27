@@ -469,6 +469,9 @@
 
         var track = document.createElement('div');
         track.className = 'blog-carousel-track';
+        if (stories.length < CARDS_PER_PAGE) {
+          track.style.justifyContent = 'center';
+        }
         stories.forEach(function(s) { track.appendChild(buildCard(s)); });
         wrap.appendChild(track);
         blogGrid = track;
