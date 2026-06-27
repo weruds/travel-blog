@@ -240,6 +240,9 @@ nav.scrolled{border-color:var(--border);box-shadow:0 2px 32px rgba(245,158,11,0.
   pointer-events:none;z-index:0;opacity:1;
 }
 #blog>.container{position:relative;z-index:1}
+@media(max-width:640px){
+  #blogMapBg{opacity:0.55}
+}
 #about{background:var(--bg)}
 .about-content{max-width:680px;margin:0 auto;text-align:left}
 .about-content .label{margin-bottom:0.8em}

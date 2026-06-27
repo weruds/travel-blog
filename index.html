@@ -612,12 +612,12 @@
 
     /* ── Draw static world map ── */
     function drawMap(W, H, dark) {
-      /* slightly stronger opacity on mobile so the zoomed-in map reads clearly */
       var mob = window.innerWidth <= 640;
-      var landFill   = dark ? (mob ? 'rgba(245,158,11,0.11)' : 'rgba(245,158,11,0.07)')
-                            : (mob ? 'rgba(180,120,0,0.14)'  : 'rgba(180,120,0,0.09)');
-      var landStroke = dark ? (mob ? 'rgba(245,158,11,0.24)' : 'rgba(245,158,11,0.16)')
-                            : (mob ? 'rgba(150,100,0,0.28)'  : 'rgba(150,100,0,0.18)');
+      /* On mobile: almost invisible fill, hairline stroke only — map is a ghost */
+      var landFill   = dark ? (mob ? 'rgba(245,158,11,0.03)' : 'rgba(245,158,11,0.07)')
+                            : (mob ? 'rgba(180,120,0,0.04)'  : 'rgba(180,120,0,0.09)');
+      var landStroke = dark ? (mob ? 'rgba(245,158,11,0.10)' : 'rgba(245,158,11,0.16)')
+                            : (mob ? 'rgba(150,100,0,0.12)'  : 'rgba(150,100,0,0.18)');
 
       LANDS.forEach(function(poly) {
         ctx.beginPath();
@@ -629,7 +629,7 @@
         ctx.fillStyle = landFill;
         ctx.fill();
         ctx.strokeStyle = landStroke;
-        ctx.lineWidth = 0.5;
+        ctx.lineWidth = mob ? 0.4 : 0.5;
         ctx.stroke();
       });
     }
