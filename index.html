@@ -674,21 +674,27 @@
     function renderPage(idx, animate) {
       var newPage = makePage(pages[idx]);
       if (!animate || !activePageEl) {
-        newPage.classList.add('active');
         viewport.innerHTML = '';
         viewport.appendChild(newPage);
         activePageEl = newPage;
         return;
       }
       animating = true;
+      /* position the exiting page absolutely so the entering page
+         flows in the normal document flow (no height collapse) */
+      var exitHeight = activePageEl.offsetHeight;
+      viewport.style.minHeight = exitHeight + 'px';
+      activePageEl.style.cssText = 'position:absolute;top:0;left:0;width:100%;';
+      activePageEl.classList.add('exit');
+
       newPage.classList.add('enter');
       viewport.appendChild(newPage);
-      activePageEl.classList.add('exit');
+
       var oldPage = activePageEl;
       activePageEl = newPage;
       setTimeout(function() {
         newPage.classList.remove('enter');
-        newPage.classList.add('active');
+        viewport.style.minHeight = '';
         if (oldPage.parentNode) oldPage.parentNode.removeChild(oldPage);
         animating = false;
       }, 700);

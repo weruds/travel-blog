@@ -411,23 +411,22 @@ nav.scrolled{border-color:var(--border);box-shadow:0 2px 32px rgba(245,158,11,0.
   font-family:monospace;background:rgba(245,158,11,0.12);
   border-radius:4px;padding:2px 6px;font-size:0.85em;color:var(--accent);
 }
-/* ── Gallery 5-up Slideshow ── */
+/* ── Gallery 5-up Horizontal Slideshow ── */
 .gallery-viewport{
   position:relative;
   width:100%;
   overflow:hidden;
+  /* height is driven by the active page's natural content height */
 }
-/* a "page" = one row of 5 images side by side */
+/* each page = one horizontal strip of 5 images */
 .gallery-page{
   display:flex;
+  flex-direction:row;       /* HORIZONTAL — left to right */
+  flex-wrap:nowrap;         /* never wrap to next line */
   gap:10px;
-  align-items:flex-end; /* align bottoms so mixed heights look intentional */
-  position:absolute;
-  inset:0;
+  align-items:flex-start;
   width:100%;
 }
-/* first page is static; entering/exiting pages animate */
-.gallery-page.active{position:relative;inset:auto}
 .gallery-page.enter{
   animation:pgSlideIn 0.7s cubic-bezier(0.4,0,0.2,1) forwards;
 }
@@ -435,14 +434,18 @@ nav.scrolled{border-color:var(--border);box-shadow:0 2px 32px rgba(245,158,11,0.
   position:absolute;top:0;left:0;width:100%;
   animation:pgSlideOut 0.7s cubic-bezier(0.4,0,0.2,1) forwards;
   pointer-events:none;
+  z-index:1;
 }
 @keyframes pgSlideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
 @keyframes pgSlideOut{from{transform:translateX(0)}to{transform:translateX(-100%)}}
 
-/* individual photo cell */
+/* individual photo cell — equal width, image fills naturally */
 .gallery-cell{
-  flex:1;min-width:0;
-  display:flex;flex-direction:column;align-items:center;
+  flex:1 1 0;              /* equal width shares */
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
   background:var(--surface);
   border-radius:var(--radius-sm);
   overflow:hidden;
@@ -450,9 +453,8 @@ nav.scrolled{border-color:var(--border);box-shadow:0 2px 32px rgba(245,158,11,0.
 }
 .gallery-cell img{
   width:100%;
-  height:auto;         /* NEVER crop — show full image */
+  height:auto;             /* full image, no crop */
   display:block;
-  object-fit:contain;
 }
 .gallery-cell-cap{
   width:100%;padding:6px 8px;
