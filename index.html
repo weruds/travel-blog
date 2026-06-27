@@ -377,20 +377,27 @@
     var ctx = canvas.getContext('2d');
 
     /* ── Geo → canvas coordinate (equirectangular) ──
-       lon: -180..180  lat: -90..90
-       Maps to canvas pixels with a slight vertical crop so the
-       poles are trimmed and the interesting latitudes fill the frame.
-       We show lon -30 → 210 (wrapping Pacific on right) so Asia/PH is
-       nicely centred. Lat shown: -55 → 75 (cuts Arctic/Antarctic).     */
-    var LON_MIN = -30, LON_MAX = 210;   /* 240° of longitude visible */
-    var LAT_MIN = -55, LAT_MAX =  75;   /* 130° of latitude visible  */
+       Desktop: full world view, centred on Asia-Pacific.
+       Mobile (≤640 px): zoomed in on Southeast Asia so the Philippines
+       and its neighbours fill the canvas rather than being a tiny speck. */
+
+    /* Desktop window */
+    var DESK = { lonMin:-30, lonMax:210, latMin:-55, latMax:75 };
+    /* Mobile window — centred on SEA, covers PH + all current destinations */
+    var MOB  = { lonMin: 55, lonMax:175, latMin:-20, latMax:55 };
+
+    function getWindow() {
+      return window.innerWidth <= 640 ? MOB : DESK;
+    }
 
     function project(lon, lat, W, H) {
-      /* normalise lon into our window (handle wrap-around) */
+      var win = getWindow();
       var normLon = lon;
-      if (normLon < LON_MIN) normLon += 360;
-      var x = (normLon - LON_MIN) / (LON_MAX - LON_MIN) * W;
-      var y = (1 - (lat - LAT_MIN) / (LAT_MAX - LAT_MIN)) * H;
+      /* wrap longitude into window */
+      if (normLon < win.lonMin) normLon += 360;
+      if (normLon > win.lonMax) normLon -= 360;
+      var x = (normLon  - win.lonMin) / (win.lonMax - win.lonMin) * W;
+      var y = (1 - (lat - win.latMin) / (win.latMax - win.latMin)) * H;
       return { x: x, y: y };
     }
 
@@ -605,9 +612,12 @@
 
     /* ── Draw static world map ── */
     function drawMap(W, H, dark) {
-      /* land fill */
-      var landFill   = dark ? 'rgba(245,158,11,0.07)' : 'rgba(180,120,0,0.09)';
-      var landStroke = dark ? 'rgba(245,158,11,0.16)' : 'rgba(150,100,0,0.18)';
+      /* slightly stronger opacity on mobile so the zoomed-in map reads clearly */
+      var mob = window.innerWidth <= 640;
+      var landFill   = dark ? (mob ? 'rgba(245,158,11,0.11)' : 'rgba(245,158,11,0.07)')
+                            : (mob ? 'rgba(180,120,0,0.14)'  : 'rgba(180,120,0,0.09)');
+      var landStroke = dark ? (mob ? 'rgba(245,158,11,0.24)' : 'rgba(245,158,11,0.16)')
+                            : (mob ? 'rgba(150,100,0,0.28)'  : 'rgba(150,100,0,0.18)');
 
       LANDS.forEach(function(poly) {
         ctx.beginPath();
