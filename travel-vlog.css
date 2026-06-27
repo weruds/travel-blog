@@ -233,16 +233,26 @@ nav.scrolled{border-color:var(--border);box-shadow:0 2px 32px rgba(245,158,11,0.
 .section-header p{color:var(--muted);max-width:520px;margin:0.8rem auto 0;font-size:1.05rem}
 
 /* ===== ABOUT ===== */
-#blog{background:var(--bg2);position:relative}
-/* world-map canvas — sits behind all blog content (desktop only) */
-#blogMapBg{
-  position:absolute;inset:0;width:100%;height:100%;
-  pointer-events:none;z-index:0;opacity:1;
+#blog{background:var(--bg2)}
+/* ── World map panel — dedicated block between filter bar and cards ── */
+#blogMapWrap{
+  position:relative;
+  width:100%;
+  height:260px;
+  margin-bottom:2rem;
+  border-radius:var(--radius);
+  overflow:hidden;
+  border:1px solid var(--border);
+  background:var(--surface);
 }
-#blog>.container{position:relative;z-index:1}
-/* hide map on mobile & tablet — not worth the visual noise at small sizes */
+#blogMapBg{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  pointer-events:none;
+}
+/* hide map panel on mobile & tablet */
 @media(max-width:1024px){
-  #blogMapBg{display:none}
+  #blogMapWrap{display:none}
 }
 #about{background:var(--bg)}
 .about-content{max-width:680px;margin:0 auto;text-align:left}
