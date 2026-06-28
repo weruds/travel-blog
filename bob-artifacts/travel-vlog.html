@@ -24,6 +24,7 @@
     --ux-shadow: 0 24px 60px rgba(2, 6, 23, 0.34);
     --ux-radius: 28px;
     --ux-max: 1180px;
+    --ux-ease: cubic-bezier(.22, 1, .36, 1);
   }
 
   html { scroll-behavior: smooth; }
@@ -32,6 +33,7 @@
       radial-gradient(circle at top, rgba(56, 189, 248, 0.14), transparent 28%),
       linear-gradient(180deg, #040814 0%, #07111f 34%, #08101a 100%);
     color: var(--ux-text);
+    overflow-x: hidden;
   }
 
   .container,
@@ -51,6 +53,40 @@
     background: rgba(4, 10, 20, 0.58);
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   }
+
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .hamburger {
+    display: none;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--ux-text);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 5px;
+    transition: transform 0.25s var(--ux-ease), background-color 0.25s var(--ux-ease), border-color 0.25s var(--ux-ease);
+  }
+
+  .hamburger span {
+    width: 18px;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+    transition: transform 0.25s var(--ux-ease), opacity 0.25s var(--ux-ease);
+  }
+
+  .hamburger.is-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .hamburger.is-open span:nth-child(2) { opacity: 0; }
+  .hamburger.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
   .nav-inner {
     min-height: 78px;
@@ -102,6 +138,41 @@
     background: rgba(255, 255, 255, 0.08);
   }
 
+  .mobile-menu {
+    position: fixed;
+    top: 5.5rem;
+    right: 1rem;
+    left: 1rem;
+    z-index: 39;
+    padding: 0.8rem;
+    border-radius: 24px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-12px) scale(0.98);
+    transition: opacity 0.28s var(--ux-ease), transform 0.28s var(--ux-ease), visibility 0.28s;
+  }
+
+  .mobile-menu.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+  }
+
+  .mobile-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.45rem;
+  }
+
+  .mobile-menu a {
+    display: block;
+    padding: 0.95rem 1rem;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
   #hero {
     position: relative;
     min-height: 100svh;
@@ -109,6 +180,7 @@
     align-items: end;
     padding: 8rem 0 4rem;
     overflow: clip;
+    perspective: 1200px;
   }
 
   .hero-content {
@@ -152,6 +224,12 @@
     color: var(--ux-muted);
   }
 
+  .hero-scene {
+    transform-style: preserve-3d;
+    will-change: transform;
+    transition: transform 0.35s var(--ux-ease);
+  }
+
   .hero-content::after {
     content: '';
     position: absolute;
@@ -163,6 +241,17 @@
     pointer-events: none;
     z-index: -1;
   }
+
+  .hero-content > * {
+    opacity: 0;
+    transform: translateY(26px);
+    animation: riseIn 0.8s var(--ux-ease) forwards;
+  }
+
+  .hero-tag { animation-delay: 0.05s; }
+  .hero-title { animation-delay: 0.14s; }
+  .hero-sub { animation-delay: 0.24s; }
+  .hero-actions { animation-delay: 0.34s; }
 
   .hero-actions {
     display: flex;
@@ -306,6 +395,14 @@
   }
 
   .blog-card,
+  .masonry-item,
+  .about-content,
+  .stat,
+  .featured-chip {
+    transition: transform 0.35s var(--ux-ease), border-color 0.35s var(--ux-ease), box-shadow 0.35s var(--ux-ease), background-color 0.35s var(--ux-ease);
+  }
+
+  .blog-card,
   .about-content,
   .stat,
   .masonry-item,
@@ -329,14 +426,36 @@
 
   .blog-card {
     overflow: hidden;
+    transform-origin: center bottom;
     transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
+  }
+
+  .blog-card::after,
+  .masonry-item::after,
+  .featured-chip::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 20%, rgba(255, 255, 255, 0.12) 50%, transparent 80%);
+    opacity: 0;
+    transform: translateX(-120%);
+    transition: transform 0.7s var(--ux-ease), opacity 0.4s ease;
+    pointer-events: none;
   }
 
   .blog-card:hover,
   .blog-card:focus-within {
-    transform: translateY(-8px);
+    transform: translateY(-10px) scale(1.01);
     border-color: rgba(125, 211, 252, 0.3);
     box-shadow: 0 28px 70px rgba(2, 6, 23, 0.42);
+  }
+
+  .blog-card:hover::after,
+  .blog-card:focus-within::after,
+  .masonry-item:hover::after,
+  .featured-chip:hover::after {
+    opacity: 1;
+    transform: translateX(120%);
   }
 
   .blog-card-img,
@@ -376,6 +495,7 @@
     margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
@@ -432,6 +552,11 @@
 
   .masonry-overlay {
     background: linear-gradient(180deg, transparent, rgba(2, 6, 23, 0.82));
+    transition: opacity 0.3s var(--ux-ease);
+  }
+
+  .masonry-item:hover {
+    transform: translateY(-6px) scale(1.01);
   }
 
   .modal-backdrop.open {
@@ -469,14 +594,61 @@
     color: rgba(255, 255, 255, 0.5);
   }
 
+  .reveal-up {
+    opacity: 0;
+    transform: translateY(34px);
+    transition: opacity 0.75s var(--ux-ease), transform 0.75s var(--ux-ease);
+  }
+
+  .reveal-up.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @keyframes riseIn {
+    from {
+      opacity: 0;
+      transform: translateY(26px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes driftGlow {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(0, -10px, 0) scale(1.03); }
+  }
+
   @media (max-width: 900px) {
     .footer-inner { grid-template-columns: 1fr; }
     .stats-row { grid-template-columns: 1fr; }
+    .featured-strip { overflow-x: auto; padding-bottom: 0.4rem; flex-wrap: nowrap; scroll-snap-type: x proximity; }
+    .featured-chip { scroll-snap-align: start; white-space: nowrap; }
   }
 
   @media (max-width: 720px) {
     .nav-links { display: none; }
+    .hamburger { display: inline-flex; }
+    .hero-scene { animation: driftGlow 8s ease-in-out infinite; }
     .hero-content { padding-bottom: 3.25rem; }
+    .hero-title { max-width: 8ch; }
+    .hero-actions { flex-direction: column; }
+    .hero-cta { width: 100%; min-width: 0; }
+    .filter-bar,
+    .gallery-filter-bar {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding-bottom: 0.4rem;
+      -webkit-overflow-scrolling: touch;
+    }
+    .filter-section-label { display: none; }
+    .blog-grid { grid-template-columns: 1fr; gap: 1rem; }
+    .blog-card-body,
+    .blog-card-footer,
+    .about-content,
+    footer .container { padding-left: 1rem; padding-right: 1rem; }
     #blog,
     #about,
     #gallery,
@@ -553,7 +725,7 @@
 </section>
 
 
-<section id="blog" aria-labelledby="blog-heading">
+<section id="blog" class="reveal-up" aria-labelledby="blog-heading">
   <div class="container">
     <div class="section-header">
       <span class="label">📍 Destinations</span>
@@ -573,7 +745,7 @@
 </section>
 
 
-<section id="about" aria-labelledby="about-heading">
+<section id="about" class="reveal-up" aria-labelledby="about-heading">
   <div class="container">
     <div class="about-content">
       <span class="label">✨ The Human Behind the Camera</span>
@@ -591,7 +763,7 @@
 </section>
 
 
-<section id="gallery" aria-labelledby="gallery-heading">
+<section id="gallery" class="reveal-up" aria-labelledby="gallery-heading">
   <div class="container">
     <div class="section-header reveal">
       <span class="label">Visual Journal</span>
@@ -823,6 +995,37 @@
     }
   })();
 
+  /* ── 12ab. MOBILE MENU ───────────────────────────────────────────── */
+  (function() {
+    var hamburger = document.getElementById('hamburger');
+    var menu = document.getElementById('mobileMenu');
+    if (!hamburger || !menu) return;
+
+    function setOpen(open) {
+      hamburger.classList.toggle('is-open', open);
+      hamburger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      menu.classList.toggle('open', open);
+    }
+
+    hamburger.addEventListener('click', function() {
+      setOpen(!menu.classList.contains('open'));
+    });
+
+    menu.querySelectorAll('a').forEach(function(link) {
+      link.addEventListener('click', function() { setOpen(false); });
+    });
+
+    document.addEventListener('click', function(e) {
+      if (!menu.classList.contains('open')) return;
+      if (menu.contains(e.target) || hamburger.contains(e.target)) return;
+      setOpen(false);
+    });
+
+    window.addEventListener('resize', function() {
+      if (window.innerWidth > 720) setOpen(false);
+    });
+  })();
+
   /* ── 12b. SECTION HEADING UNDERLINE ─────────────────────────────── */
   (function() {
     if (!window.IntersectionObserver) return;
@@ -830,6 +1033,42 @@
       entries.forEach(function(en) { if (en.isIntersecting) { en.target.querySelector('h2') && en.target.querySelector('h2').classList.add('in-view'); } });
     }, { threshold: 0.3 });
     document.querySelectorAll('.section-header').forEach(function(el) { obs.observe(el); });
+  })();
+
+  /* ── 12c. REVEAL ON SCROLL ───────────────────────────────────────── */
+  (function() {
+    if (!window.IntersectionObserver) return;
+    var targets = document.querySelectorAll('.reveal-up');
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-visible');
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.16, rootMargin: '0px 0px -8% 0px' });
+    targets.forEach(function(target) { observer.observe(target); });
+  })();
+
+  /* ── 12d. CINEMATIC HERO TILT ────────────────────────────────────── */
+  (function() {
+    var hero = document.getElementById('hero');
+    var scene = document.getElementById('heroScene');
+    if (!hero || !scene || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    var frame = null;
+    hero.addEventListener('pointermove', function(e) {
+      var rect = hero.getBoundingClientRect();
+      var px = (e.clientX - rect.left) / rect.width - 0.5;
+      var py = (e.clientY - rect.top) / rect.height - 0.5;
+      if (frame) cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(function() {
+        scene.style.transform = 'rotateX(' + (-py * 5) + 'deg) rotateY(' + (px * 8) + 'deg) scale(1.02)';
+      });
+    });
+
+    hero.addEventListener('pointerleave', function() {
+      scene.style.transform = '';
+    });
   })();
 
   /* ── SHARED: carousel initialiser ───────────────────────────────── */
