@@ -245,6 +245,17 @@ nav.scrolled{border-color:var(--border);box-shadow:0 10px 36px rgba(245,158,11,0
   border:1px solid var(--border);
   background:var(--surface);
 }
+#blogMapWrap::after{
+  content:'';
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  height:18px;
+  background:linear-gradient(to bottom,rgba(255,243,214,0),var(--surface) 78%);
+  pointer-events:none;
+  z-index:1;
+}
 #blogMapBg{
   position:absolute;inset:0;
   width:100%;height:100%;
