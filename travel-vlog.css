@@ -562,6 +562,7 @@ nav.scrolled{border-color:var(--border);box-shadow:0 10px 36px rgba(245,158,11,0
 .modal-backdrop.open{opacity:1;visibility:visible}
 .modal-box{background:var(--card-bg);border-radius:var(--radius);max-width:700px;width:100%;overflow:hidden;transform:scale(0.94);transition:transform 0.3s;border:1px solid var(--border)}
 .modal-backdrop.open .modal-box{transform:scale(1)}
+.modal-img{position:relative}
 .modal-img svg{width:100%;display:block}
 .modal-info{padding:1.5rem}
 .modal-info:empty,.modal-info h3:empty+p:empty{display:none}
@@ -734,7 +735,7 @@ a,button,label,input,select,textarea,.dark-toggle,.filter-btn,.read-more,.modal-
 .blog-card,.gallery-cell{pointer-events:auto}
 .img-guard{position:absolute;inset:0;z-index:5;background:transparent;cursor:default;-webkit-user-select:none;user-select:none}
 .blog-card-img,.gallery-cell{position:relative}
-.blog-card-img::after,.gallery-cell::after{
+.blog-card-img::after,.gallery-cell::after,.modal-img::after{
   content:"© KYWR Travel Vlog";
   position:absolute;inset:0;z-index:6;
   display:flex;align-items:center;justify-content:center;
