@@ -741,7 +741,7 @@ a,button,label,input,select,textarea,.dark-toggle,.filter-btn,.read-more,.modal-
   display:flex;align-items:center;justify-content:center;
   padding:1rem;
   font-size:0.65rem;font-weight:700;letter-spacing:0.12em;
-  color:rgba(255,255,255,0.10);text-transform:uppercase;text-align:center;
+  color:rgba(255,255,255,0.07);text-transform:uppercase;text-align:center;
   text-shadow:0 1px 2px rgba(0,0,0,0.28);
   pointer-events:none;white-space:nowrap;max-width:none;transform:rotate(-25deg);user-select:none;
 }
