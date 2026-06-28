@@ -736,12 +736,14 @@ a,button,label,input,select,textarea,.dark-toggle,.filter-btn,.read-more,.modal-
 .img-guard{position:absolute;inset:0;z-index:5;background:transparent;cursor:default;-webkit-user-select:none;user-select:none}
 .blog-card-img,.gallery-cell{position:relative}
 .blog-card-img::after,.gallery-cell::after,.modal-img::after{
-  content:"© KYWR Travel Vlog";
+  content:"© KYWR Travel Vlog   •   © KYWR Travel Vlog   •   © KYWR Travel Vlog";
   position:absolute;inset:0;z-index:6;
   display:flex;align-items:center;justify-content:center;
-  font-size:0.65rem;font-weight:700;letter-spacing:0.12em;
-  color:rgba(255,255,255,0.10);text-transform:uppercase;
-  pointer-events:none;white-space:nowrap;transform:rotate(-25deg);user-select:none;
+  padding:1rem;
+  font-size:0.72rem;font-weight:800;letter-spacing:0.18em;line-height:1.9;
+  color:rgba(255,255,255,0.18);text-transform:uppercase;text-align:center;
+  text-shadow:0 1px 2px rgba(0,0,0,0.35),0 0 18px rgba(0,0,0,0.18);
+  pointer-events:none;white-space:normal;transform:rotate(-25deg);user-select:none;
 }
 #sec-warning{
   display:none;position:fixed;inset:0;z-index:99999;
